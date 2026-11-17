@@ -1,8 +1,8 @@
-# FFMPEGplaydownloader (v1.6.0)
+# FFMPEGplaydownloader (v1.7.0)
 
 Samostatná univerzální Android aplikace (APK) v **Kotlinu** a **Jetpack Compose** s vestavěným **`yt-dlp`**, **`FFmpeg`** (`youtubedl-android 0.18.1`) a přehrávačem **`Media3 ExoPlayer 1.5.1`**.
 
-> Aktuální verze: **`1.6.0`** (`versionCode = 7`) • Balíček: `com.ffmpegplaydownloader.app` • Android **7.0+ (API 24–35)**
+> Aktuální verze: **`1.7.0`** (`versionCode = 8`) • Balíček: `com.ffmpegplaydownloader.app` • Android **7.0+ (API 24–35)**
 
 ---
 
@@ -105,6 +105,9 @@ Minimální verze systému je **Android 7.0 (`minSdk = 24`)**, cílová a kompil
 ### 7. Fronta, Oblíbené, Historie, Knihovna & Bezpečné ukončení aplikace
 - **6 spodních záložek (`MainTab`)**:
   - `Hledat` • `Fronta` (`queue.json`) • `Oblíbené` (`favorites.json`) • `Historie` (`history.json`, posledních 100 položek) • `Stahování` (živý průběh, ETA, zrušení) • `Knihovna` (přehrávání, lokální FFmpeg konverze, sdílení přes `FileProvider`, mazání).
+- **📖 README / Nápověda přímo v aplikaci (`ReadmeDialog` v `TopStudioHeader`, novinka v1.7.0)**:
+  - Kliknutím na štítek **📖 README** v hlavičce aplikace (vedle **🍪 Cookies**) se otevře vestavěný prohlížeč dokumentace (`ReadmeDialog`), který načítá aktuální `README.md` přibalený přímo v APK (`assets/README.md`, synchronizováno při sestavení úlohou `syncReadmeToAssets`).
+  - Podporuje živé vyhledávání (`"Hledat v README..."`), formátované vykreslení Markdownu (nadpisy, seznamy, citace, tabulky, oddělovače, vodorovně posuvné bloky kódu) i tlačítko **Kopírovat** pro zkopírování celého obsahu do schránky.
 - **⏻ Elegantní ukončení aplikace (`Ukončit` v `TopStudioHeader`, novinka v1.6.0)**:
   - Tlačítko **Ukončit** (`Icons.Default.PowerSettingsNew`) v pravém horním rohu hlavičky zobrazí potvrzovací dialog (`"Ukončit aplikaci?"`), který upozorní i na případné běžící úlohy stahování nebo lokálního FFmpeg zpracování.
   - Po potvrzení (`MainViewModel.confirmExitApp()`):
@@ -147,6 +150,7 @@ app/src/main/java/com/ffmpegplaydownloader/app/
 │   │   ├── MainScreen.kt               # Hlavní obrazovka, TopStudioHeader, hlasový dialog, exit dialog, záložky
 │   │   ├── PlatformBadge.kt            # Štítky platforem (YT Music / YouTube / Web / Lokální)
 │   │   ├── PlayerSection.kt            # Karta přehrávače, posuvník, titulky, režimy streamu
+│   │   ├── ReadmeDialog.kt             # Vestavěný prohlížeč README.md / nápovědy z APK assets
 │   │   └── SleepTimerAndSpeedDialog.kt # Dialog rychlosti, opakování, shuffle a časovače
 │   └── theme/Theme.kt                  # Tmavé barevné schéma aplikace (AppColors)
 ├── viewmodel/

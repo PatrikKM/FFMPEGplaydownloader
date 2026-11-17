@@ -272,6 +272,7 @@ fun MainScreen(viewModel: MainViewModel) {
                     cookiesStatus = state.cookiesStatus,
                     onUpdateClick = viewModel::checkAndAutoUpdateYtDlp,
                     onCookiesClick = viewModel::openCookiesDialog,
+                    onReadmeClick = viewModel::openReadmeDialog,
                     onExitClick = viewModel::requestExitApp
                 )
 
@@ -877,6 +878,13 @@ fun MainScreen(viewModel: MainViewModel) {
             )
         }
 
+        // In-App README / Help Dialog
+        if (state.showReadmeDialog && !state.isInPipMode) {
+            ReadmeDialog(
+                onDismiss = viewModel::closeReadmeDialog
+            )
+        }
+
         // Graceful App Exit Confirmation Dialog
         if (state.showExitConfirmDialog && !state.isInPipMode) {
             val activeFfmpegCount = if (state.localFfmpegJob.isProcessing) 1 else 0
@@ -951,6 +959,7 @@ private fun TopStudioHeader(
     cookiesStatus: CookiesStatus,
     onUpdateClick: () -> Unit,
     onCookiesClick: () -> Unit,
+    onReadmeClick: () -> Unit,
     onExitClick: () -> Unit
 ) {
     Column(
@@ -1098,6 +1107,13 @@ private fun TopStudioHeader(
                 borderColor = cookiesBorderColor,
                 labelColor = cookiesLabelColor,
                 onClick = onCookiesClick
+            )
+            StatusPill(
+                dotColor = AppColors.PrimaryBlue,
+                label = "📖 README",
+                borderColor = AppColors.PrimaryBlue.copy(alpha = 0.55f),
+                labelColor = AppColors.TextPrimary,
+                onClick = onReadmeClick
             )
         }
     }

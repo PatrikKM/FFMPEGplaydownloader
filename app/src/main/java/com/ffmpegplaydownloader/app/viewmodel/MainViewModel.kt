@@ -103,6 +103,7 @@ data class MainUiState(
     val cookiesStatus: CookiesStatus = CookiesStatus(),
     val showCookiesDialog: Boolean = false,
     val cookiesFeedback: String? = null,
+    val showReadmeDialog: Boolean = false,
     val showExitConfirmDialog: Boolean = false
 )
 
@@ -276,6 +277,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 cookiesFeedback = null
             )
         }
+    }
+
+    // --- In-App README / Help ---
+    fun openReadmeDialog() {
+        _uiState.update { it.copy(showReadmeDialog = true) }
+    }
+
+    fun closeReadmeDialog() {
+        _uiState.update { it.copy(showReadmeDialog = false) }
     }
 
     fun importCookiesUri(uri: Uri) {
@@ -970,6 +980,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             !state.showEqualizerDialog &&
             !state.showSleepTimerDialog &&
             !state.showCookiesDialog &&
+            !state.showReadmeDialog &&
             !state.showExitConfirmDialog &&
             !isShuttingDown &&
             state.downloadModalTarget == null &&
@@ -1387,6 +1398,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 showEqualizerDialog = false,
                 showSleepTimerDialog = false,
                 showCookiesDialog = false,
+                showReadmeDialog = false,
                 downloadModalTarget = null,
                 localFfmpegJob = LocalFfmpegJobState(),
                 isVoiceListening = false,

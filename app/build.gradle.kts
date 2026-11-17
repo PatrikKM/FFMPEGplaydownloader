@@ -21,8 +21,8 @@ android {
         applicationId = "com.ffmpegplaydownloader.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 7
-        versionName = "1.6.0"
+        versionCode = 8
+        versionName = "1.7.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -112,4 +112,13 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
+}
+
+val syncReadmeToAssets by tasks.registering(Copy::class) {
+    from(rootProject.file("README.md"))
+    into(layout.projectDirectory.dir("src/main/assets"))
+}
+
+tasks.named("preBuild") {
+    dependsOn(syncReadmeToAssets)
 }
