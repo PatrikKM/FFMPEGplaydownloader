@@ -1,0 +1,27 @@
+# Signing keys & local environment
+keystore/
+*.jks
+*.keystore
+keystore.properties
+local.properties
+
+# Gradle & build outputs
+.gradle/
+.kotlin/
+build/
+app/build/
+.cxx/
+captures/
+
+# IDE files
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Compiled binaries & logs
+*.apk
+*.aab
+*.log
