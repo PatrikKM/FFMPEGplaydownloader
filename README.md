@@ -1,8 +1,8 @@
-# FFMPEGplaydownloader (v1.7.2)
+# FFMPEGplaydownloader (v1.8.0)
 
 Samostatná univerzální Android aplikace (APK) v **Kotlinu** a **Jetpack Compose** s vestavěným **`yt-dlp`**, **`FFmpeg`** (`youtubedl-android 0.18.1`) a přehrávačem **`Media3 ExoPlayer 1.5.1`**.
 
-> Aktuální verze: **`1.7.2`** (`versionCode = 10`) • Balíček: `com.ffmpegplaydownloader.app` • Android **7.0+ (API 24–35)**
+> Aktuální verze: **`1.8.0`** (`versionCode = 11`) • Balíček: `com.ffmpegplaydownloader.app` • Android **7.0+ (API 24–35)**
 
 ---
 
@@ -54,10 +54,15 @@ Minimální verze systému je **Android 7.0 (`minSdk = 24`)**, cílová a kompil
 - **Aktualizace `yt-dlp`**: automatická kontrola při spuštění aplikace i ruční aktualizace tlačítkem **🔄 Aktualizovat** v hlavičce (`YoutubeDL.UpdateChannel._STABLE`).
 
 ### 2. Přehrávač Media3 ExoPlayer, Fullscreen, PiP & Pozadí
-- **Tři režimy streamování (`StreamMode`)** (`MediaPlayerController`):
-  - `⚡ Rychlé video (MP4)` — progresivní stream s okamžitým startem; pokud samostatný progresivní MP4 neobsahuje zvuk (nebo selže), automaticky přechází na sloučení MP4 videa a zvuku (`MergingMediaSource`) s podporou HLS/DASH modulů Media3 (`media3-exoplayer-hls`, `media3-exoplayer-dash`).
-  - `🎞️ HQ Mux (1080p+ video+zvuk)` — oddělený obrazový a zvukový DASH stream sloučený v reálném čase přes `MergingMediaSource`.
+- **Tři režimy streamování (`StreamMode`) & chytrá automatická oprava formátu (v1.8.0)** (`YtDlpRepository`, `MediaPlayerController`):
+  - `⚡ Rychlé video (MP4)` — progresivní nebo kompatibilní `avc1` (H.264) + `mp4a` (AAC) MP4 stream s okamžitým startem a ověřenou zvukovou stopou; podle hardwarových dekodérů zařízení (`MediaCodecList`) upřednostňuje spolehlivě podporované kodeky před nekompatibilními variantami.
+  - `🎞️ HQ Mux (1080p+ video+zvuk)` — oddělený obrazový a zvukový DASH stream sloučený v reálném čase přes `MergingMediaSource` (striktě bez míchání `.m3u8`/`.mpd` do `MergingMediaSource`).
   - `🎵 Pouze zvuk (Audio stream)` — úsporný poslech bez videa se zobrazením náhledu a štítku platformy.
+  - **Automatické samoopravení při chybě (`PlaybackAttempt`)**: pokud některý kandidát selže (např. chybějící zvuk, nekompatibilní kodek nebo vadné titulky), přehrávač přes `mainHandler.post` bezpečně přepne na další kompatibilní formát (případně bez titulků) a po vyčerpání kandidátů jednorázově obnoví čerstvou adresu streamu bez zobrazení surové interní chyby.
+- **📺 Sdílení, Broadcast, Chromecast & Zrcadlení (v1.8.0)** (`ShareCastHelper`, `ShareAndCastDialog`):
+  - Tlačítko **Sdílet** / **Sdílet / Cast** je dostupné přímo u karet výsledků vyhledávání, ve Frontě, Oblíbených, Historii, Knihovně i v ovládání přehrávače (portrét i Fullscreen HUD).
+  - **Chromecast, TV & Zrcadlení**: rychlé otevření systémového nastavení Cast / Wireless Display / Zrcadlení obrazovky a odeslání přímého video či audio streamu (i lokálního souboru přes `FileProvider`) do externích Cast/DLNA přehrávačů (VLC, Web Video Caster, BubbleUPnP, Kodi aj.).
+  - **Sdílet & Broadcast**: systémový Broadcast do aplikací, kopírování odkazu nebo přímé URL streamu do schránky i otevření v prohlížeči či původní aplikaci.
 - **Časová osa a rychlé skoky**: interaktivní posuvník a tlačítka `⏮ 0:00`, `-30s`, `-10s`, Play/Pause, `+10s`, `+30s`.
 - **České titulky**: automatické vyhledání českých stop (`cs` / `ces` / `cze`, oficiálních i automaticky generovaných ve formátech VTT/SRT/TTML) s možností zapnutí/vypnutí přímo v přehrávači.
 - **Přehrávání na pozadí i při vypnuté obrazovce (`PlaybackService : MediaSessionService`)**:
@@ -133,12 +138,13 @@ app/src/main/java/com/ffmpegplaydownloader/app/
 │   ├── LocalFfmpegProcessor.kt         # Offline spouštění libffmpeg.so + parser průběhu
 │   ├── NaturalLanguageSearchEngine.kt  # CZ/EN NLP analýza dotazů, hlasové příkazy, řazení výsledků
 │   ├── PersistenceRepository.kt        # JSON perzistence fronty, oblíbených, historie a equalizéru
+│   ├── ShareCastHelper.kt              # Broadcast sdílení, Chromecast / externí přehrávač a systémové zrcadlení
 │   ├── YouTubeMusicClient.kt           # InnerTube WEB_REMIX API klient pro YouTube Music
-│   └── YtDlpRepository.kt              # Vyhledávání, stream cache, titulky, stahování a Knihovna
+│   └── YtDlpRepository.kt              # Vyhledávání, detekce dekodérů, stream cache, titulky, stahování a Knihovna
 ├── model/
-│   └── MediaModels.kt                  # Datové modely a enumy (MediaPlatform, StreamMode, DownloadFormat...)
+│   └── MediaModels.kt                  # Datové modely a enumy (MediaPlatform, StreamMode, PlaybackAttempt...)
 ├── player/
-│   ├── MediaPlayerController.kt        # ExoPlayer ovládání, MergingMediaSource, Equalizér/BassBoost/Loudness, shutdownAll()
+│   ├── MediaPlayerController.kt        # ExoPlayer ovládání, MergingMediaSource, auto-recovery, Equalizér/BassBoost/Loudness, shutdownAll()
 │   ├── PipHelper.kt                    # Picture-in-Picture (API 26+) s poměrem 16:9 / 1:1
 │   ├── PlaybackExtrasManager.kt        # Předvolby rychlosti, opakování a časovače vypnutí
 │   ├── PlaybackService.kt              # MediaSessionService + PlayerEngine singleton pro chod na pozadí
@@ -154,6 +160,7 @@ app/src/main/java/com/ffmpegplaydownloader/app/
 │   │   ├── PlatformBadge.kt            # Štítky platforem (YT Music / YouTube / Web / Lokální)
 │   │   ├── PlayerSection.kt            # Karta přehrávače, posuvník, titulky, režimy streamu
 │   │   ├── ReadmeDialog.kt             # Vestavěný prohlížeč README.md / nápovědy z APK assets
+│   │   ├── ShareAndCastDialog.kt       # Modální menu pro Sdílení, Broadcast, Chromecast a Zrcadlení obrazovky
 │   │   └── SleepTimerAndSpeedDialog.kt # Dialog rychlosti, opakování, shuffle a časovače
 │   └── theme/Theme.kt                  # Tmavé barevné schéma aplikace (AppColors)
 ├── viewmodel/

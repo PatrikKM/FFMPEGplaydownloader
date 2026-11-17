@@ -247,6 +247,9 @@ fun MainScreen(viewModel: MainViewModel) {
                 onToggleSubtitles = viewModel::toggleSubtitles,
                 onOpenEqualizer = viewModel::openEqualizer,
                 onOpenSleepTimerAndSpeed = viewModel::openSleepTimerDialog,
+                onOpenShare = {
+                    state.currentMedia?.let { viewModel.openShareModal(it) }
+                },
                 onEnterPip = triggerPip,
                 onToggleZoom = viewModel::toggleFullscreenZoom,
                 onNextInQueue = viewModel::playNextInQueue,
@@ -497,6 +500,9 @@ fun MainScreen(viewModel: MainViewModel) {
                         onToggleFavorite = {
                             state.currentMedia?.let { viewModel.toggleFavorite(it) }
                         },
+                        onOpenShare = {
+                            state.currentMedia?.let { viewModel.openShareModal(it) }
+                        },
                         onOpenDownload = {
                             state.currentMedia?.let { viewModel.openDownloadModal(it) }
                         },
@@ -584,6 +590,7 @@ fun MainScreen(viewModel: MainViewModel) {
                                             onPlayAudio = { viewModel.playMedia(item, StreamMode.AUDIO_ONLY) },
                                             onAddQueue = { viewModel.addToQueue(item) },
                                             onToggleFav = { viewModel.toggleFavorite(item) },
+                                            onShare = { viewModel.openShareModal(item) },
                                             onDownload = { viewModel.openDownloadModal(item) }
                                         )
                                     }
@@ -647,6 +654,7 @@ fun MainScreen(viewModel: MainViewModel) {
                                         onPlayAudio = { viewModel.playMedia(item, StreamMode.AUDIO_ONLY) },
                                         onAddQueue = null,
                                         onToggleFav = { viewModel.toggleFavorite(item) },
+                                        onShare = { viewModel.openShareModal(item) },
                                         onDownload = { viewModel.openDownloadModal(item) },
                                         onRemove = { viewModel.removeFromQueue(idx) }
                                     )
@@ -692,6 +700,7 @@ fun MainScreen(viewModel: MainViewModel) {
                                         onPlayAudio = { viewModel.playMedia(item, StreamMode.AUDIO_ONLY) },
                                         onAddQueue = { viewModel.addToQueue(item) },
                                         onToggleFav = { viewModel.toggleFavorite(item) },
+                                        onShare = { viewModel.openShareModal(item) },
                                         onDownload = { viewModel.openDownloadModal(item) },
                                         onRemove = { viewModel.toggleFavorite(item) }
                                     )
@@ -739,6 +748,7 @@ fun MainScreen(viewModel: MainViewModel) {
                                         onToggleFav = if (item.isLocal) null else {
                                             { viewModel.toggleFavorite(item) }
                                         },
+                                        onShare = { viewModel.openShareModal(item) },
                                         onDownload = if (item.isLocal) null else {
                                             { viewModel.openDownloadModal(item) }
                                         },
@@ -804,7 +814,20 @@ fun MainScreen(viewModel: MainViewModel) {
                                         file = file,
                                         onPlay = { viewModel.playLocalFile(file) },
                                         onOpenFfmpeg = { viewModel.openLocalFfmpegDialog(file) },
-                                        onShare = { viewModel.shareLocalFile(file) },
+                                        onShare = {
+                                            viewModel.openShareModal(
+                                                MediaItem(
+                                                    id = file.path,
+                                                    title = file.name,
+                                                    url = "",
+                                                    extractor = "Lokální",
+                                                    platform = MediaPlatform.LOCAL,
+                                                    isLocal = true,
+                                                    localPath = file.path,
+                                                    ext = file.ext
+                                                )
+                                            )
+                                        },
                                         onDelete = { viewModel.deleteLocalFile(file) }
                                     )
                                 }
@@ -856,6 +879,21 @@ fun MainScreen(viewModel: MainViewModel) {
                     onStartDownload = { fmt, start, end, embedSubs, loudnorm ->
                         viewModel.startDownload(targetItem, fmt, start, end, embedSubs, loudnorm)
                     }
+                )
+            }
+        }
+
+        // Share, Broadcast, Chromecast & Mirroring Modal
+        if (!state.isInPipMode) {
+            state.shareModalTarget?.let { targetItem ->
+                ShareAndCastDialog(
+                    item = targetItem,
+                    resolvedStreamUrl = state.shareResolvedVideoUrl,
+                    resolvedAudioUrl = state.shareResolvedAudioUrl,
+                    isResolvingStream = state.isResolvingShareStream,
+                    onDismiss = viewModel::closeShareModal,
+                    onRequestResolveStream = { viewModel.resolveShareStreams(targetItem) },
+                    onShowStatus = viewModel::showStatusBanner
                 )
             }
         }
@@ -1266,6 +1304,7 @@ private fun BottomNavigationBar(
     }
 }
 
+@kotlin.OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MediaSearchCard(
     item: MediaItem,
@@ -1274,6 +1313,7 @@ private fun MediaSearchCard(
     onPlayAudio: () -> Unit,
     onAddQueue: () -> Unit,
     onToggleFav: () -> Unit,
+    onShare: () -> Unit,
     onDownload: () -> Unit
 ) {
     val isYtMusic = item.platform == MediaPlatform.YOUTUBE_MUSIC
@@ -1368,89 +1408,93 @@ private fun MediaSearchCard(
 
             Spacer(Modifier.height(8.dp))
 
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 if (isYtMusic) {
                     Button(
                         onClick = onPlayAudio,
                         colors = ButtonDefaults.buttonColors(containerColor = AppColors.YouTubeMusicPink),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(34.dp)
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        modifier = Modifier.height(32.dp)
                     ) {
                         Icon(Icons.Default.Headphones, contentDescription = null, modifier = Modifier.size(15.dp))
-                        Spacer(Modifier.width(2.dp))
+                        Spacer(Modifier.width(4.dp))
                         Text("Poslech", fontSize = 11.sp, color = Color.White)
                     }
                     FilledTonalButton(
                         onClick = onPlayVideo,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(
                             containerColor = AppColors.BgSurface,
                             contentColor = AppColors.TextPrimary
                         ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(34.dp)
+                        modifier = Modifier.height(32.dp)
                     ) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(15.dp))
-                        Spacer(Modifier.width(2.dp))
+                        Spacer(Modifier.width(4.dp))
                         Text("Video", fontSize = 11.sp)
                     }
                 } else {
                     Button(
                         onClick = onPlayVideo,
                         colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue),
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(34.dp)
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                        modifier = Modifier.height(32.dp)
                     ) {
                         Icon(Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(15.dp))
-                        Spacer(Modifier.width(2.dp))
+                        Spacer(Modifier.width(4.dp))
                         Text("Přehrát", fontSize = 11.sp, color = Color.White)
                     }
                     FilledTonalButton(
                         onClick = onPlayAudio,
-                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(
                             containerColor = AppColors.BgSurface,
                             contentColor = AppColors.TextPrimary
                         ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(34.dp)
+                        modifier = Modifier.height(32.dp)
                     ) {
                         Icon(Icons.Default.MusicNote, contentDescription = null, modifier = Modifier.size(15.dp))
-                        Spacer(Modifier.width(2.dp))
+                        Spacer(Modifier.width(4.dp))
                         Text("Zvuk", fontSize = 11.sp)
                     }
                 }
                 FilledTonalButton(
                     onClick = onAddQueue,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                     colors = ButtonDefaults.filledTonalButtonColors(
                         containerColor = AppColors.BgSurface,
                         contentColor = AppColors.TextPrimary
                     ),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(34.dp)
+                    modifier = Modifier.height(32.dp)
                 ) {
                     Text("➕ Fronta", fontSize = 11.sp)
+                }
+                FilledTonalButton(
+                    onClick = onShare,
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = AppColors.BgSurface,
+                        contentColor = AppColors.TextPrimary
+                    ),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Sdílet", fontSize = 11.sp)
                 }
                 Button(
                     onClick = onDownload,
                     colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentRed),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(34.dp)
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    modifier = Modifier.height(32.dp)
                 ) {
-                    Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(15.dp))
+                    Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("Stáhnout", fontSize = 11.sp, color = Color.White)
                 }
             }
         }
@@ -1468,6 +1512,7 @@ private fun SideListMediaCard(
     onPlayAudio: (() -> Unit)?,
     onAddQueue: (() -> Unit)?,
     onToggleFav: (() -> Unit)?,
+    onShare: (() -> Unit)?,
     onDownload: (() -> Unit)?,
     onRemove: () -> Unit
 ) {
@@ -1554,6 +1599,22 @@ private fun SideListMediaCard(
                     modifier = Modifier.height(30.dp)
                 ) {
                     Text(if (isFavorite) "⭐" else "☆", fontSize = 12.sp)
+                }
+            }
+            if (onShare != null) {
+                OutlinedButton(
+                    onClick = onShare,
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                    modifier = Modifier.height(30.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = null,
+                        tint = AppColors.TextPrimary,
+                        modifier = Modifier.size(13.dp)
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text("Sdílet", fontSize = 11.sp, color = AppColors.TextPrimary)
                 }
             }
             if (onDownload != null) {

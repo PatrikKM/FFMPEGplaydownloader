@@ -58,6 +58,15 @@ data class SubtitleInfo(
     val ext: String = "vtt"
 )
 
+data class PlaybackAttempt(
+    val label: String,
+    val videoUrl: String,
+    val audioUrl: String = "",
+    val isHlsOrDash: Boolean = false,
+    val includeSubtitles: Boolean = true,
+    val isAudioOnly: Boolean = false
+)
+
 data class ResolvedStreams(
     val id: String,
     val title: String,
@@ -73,7 +82,10 @@ data class ResolvedStreams(
     val czechSubtitles: SubtitleInfo,
     val platform: MediaPlatform = MediaPlatform.YOUTUBE,
     val fastVideoUrl: String = "",
-    val cookieHeader: String = ""
+    val cookieHeader: String = "",
+    val fastVideoAttempts: List<PlaybackAttempt> = emptyList(),
+    val hqVideoAttempts: List<PlaybackAttempt> = emptyList(),
+    val audioAttempts: List<PlaybackAttempt> = emptyList()
 )
 
 enum class StreamMode(val label: String) {

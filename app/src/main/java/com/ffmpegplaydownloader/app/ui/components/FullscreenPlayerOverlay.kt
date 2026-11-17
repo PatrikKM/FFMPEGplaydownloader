@@ -34,6 +34,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.Forward10
 import androidx.compose.material.icons.filled.FullscreenExit
@@ -99,6 +100,7 @@ fun FullscreenPlayerOverlay(
     onToggleSubtitles: () -> Unit,
     onOpenEqualizer: () -> Unit,
     onOpenSleepTimerAndSpeed: () -> Unit,
+    onOpenShare: () -> Unit,
     onEnterPip: () -> Unit,
     onToggleZoom: () -> Unit,
     onNextInQueue: () -> Unit,
@@ -143,9 +145,17 @@ fun FullscreenPlayerOverlay(
         isDraggingSlider,
         interactionTick,
         state.showEqualizerDialog,
-        state.showSleepTimerDialog
+        state.showSleepTimerDialog,
+        state.shareModalTarget
     ) {
-        if (controlsVisible && state.isPlaying && !isDraggingSlider && !state.showEqualizerDialog && !state.showSleepTimerDialog) {
+        if (
+            controlsVisible &&
+            state.isPlaying &&
+            !isDraggingSlider &&
+            !state.showEqualizerDialog &&
+            !state.showSleepTimerDialog &&
+            state.shareModalTarget == null
+        ) {
             delay(4000L)
             controlsVisible = false
         }
@@ -394,6 +404,25 @@ fun FullscreenPlayerOverlay(
                                 if (state.equalizerState.enabled) "EQ: ${state.equalizerState.preset.label}" else "Equalizér",
                                 fontSize = 11.sp
                             )
+                        }
+
+                        if (current != null) {
+                            FilledTonalButton(
+                                onClick = {
+                                    interactionTick++
+                                    onOpenShare()
+                                },
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = Color.Black.copy(alpha = 0.6f),
+                                    contentColor = Color.White
+                                ),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Icon(Icons.Default.Cast, contentDescription = null, modifier = Modifier.size(15.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Sdílet / Cast", fontSize = 11.sp)
+                            }
                         }
 
                         if (isPipSupported) {

@@ -99,6 +99,10 @@ data class MainUiState(
     val downloads: List<DownloadJob> = emptyList(),
     val libraryFiles: List<LocalMediaFile> = emptyList(),
     val downloadModalTarget: MediaItem? = null,
+    val shareModalTarget: MediaItem? = null,
+    val shareResolvedVideoUrl: String? = null,
+    val shareResolvedAudioUrl: String? = null,
+    val isResolvingShareStream: Boolean = false,
     val localFfmpegJob: LocalFfmpegJobState = LocalFfmpegJobState(),
     val cookiesStatus: CookiesStatus = CookiesStatus(),
     val showCookiesDialog: Boolean = false,
@@ -119,6 +123,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var localFfmpegCoroutineJob: Job? = null
     private var searchJob: Job? = null
     private var positionUpdaterJob: Job? = null
+    private var autoBannerJob: Job? = null
+    private var streamRefreshJob: Job? = null
+    private var shareResolveJob: Job? = null
     private var isShuttingDown: Boolean = false
     private var lastSavedResumeKey: String? = null
     private var lastSavedResumePosMs: Long = 0L
@@ -159,6 +166,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         },
         onPlaybackError = { errMsg ->
             _uiState.update { it.copy(streamError = errMsg) }
+        },
+        onAutoRecovered = { msg ->
+            showAutoRecoveredBanner(msg)
+        },
+        onRequestStreamRefresh = {
+            refreshCurrentMediaStreams()
         }
     )
 
@@ -259,10 +272,89 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun showStatusBanner(message: String) {
+        autoBannerJob?.cancel()
         _uiState.update { it.copy(statusBanner = message) }
     }
 
+    private fun showAutoRecoveredBanner(message: String) {
+        autoBannerJob?.cancel()
+        _uiState.update {
+            it.copy(
+                streamError = null,
+                statusBanner = message
+            )
+        }
+        autoBannerJob = viewModelScope.launch {
+            delay(4_000L)
+            _uiState.update { state ->
+                if (state.statusBanner == message) state.copy(statusBanner = null) else state
+            }
+        }
+    }
+
+    private fun refreshCurrentMediaStreams() {
+        val state = _uiState.value
+        val current = state.currentMedia ?: return
+        if (current.isLocal || current.url.isBlank()) return
+
+        val targetMode = state.streamMode
+        val resumePos = playerController.exoPlayer.currentPosition.coerceAtLeast(0L)
+
+        streamRefreshJob?.cancel()
+        streamRefreshJob = viewModelScope.launch {
+            ytDlpRepo.invalidateStreamCache(current.url)
+            _uiState.update {
+                it.copy(
+                    isResolvingStream = true,
+                    streamError = null
+                )
+            }
+            try {
+                val refreshedStreams = ytDlpRepo.resolveMediaStreams(current.url)
+                if (_uiState.value.currentMedia?.url != current.url) return@launch
+
+                val updatedItem = if (current.durationSec == 0L && refreshedStreams.durationSec > 0L) {
+                    current.copy(
+                        durationSec = refreshedStreams.durationSec,
+                        durationString = refreshedStreams.durationString
+                    )
+                } else {
+                    current
+                }
+
+                _uiState.update {
+                    it.copy(
+                        currentMedia = updatedItem,
+                        currentStreams = refreshedStreams,
+                        isResolvingStream = false,
+                        streamError = null,
+                        currentSubInfo = refreshedStreams.czechSubtitles
+                    )
+                }
+
+                playerController.playOnlineStreams(
+                    streams = refreshedStreams,
+                    streamMode = targetMode,
+                    subtitlesEnabled = _uiState.value.subtitlesEnabled,
+                    startPositionMs = resumePos,
+                    isRefreshRetry = true
+                )
+                playerController.setPlaybackSpeed(_uiState.value.playbackExtras.playbackSpeed)
+            } catch (e: Exception) {
+                if (_uiState.value.currentMedia?.url == current.url) {
+                    _uiState.update {
+                        it.copy(
+                            isResolvingStream = false,
+                            streamError = "Nelze obnovit stream: ${e.localizedMessage ?: "Chyba"}"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     fun dismissBanner() {
+        autoBannerJob?.cancel()
         _uiState.update { it.copy(statusBanner = null) }
     }
 
@@ -626,6 +718,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (startPositionMs == null && savePreviousPosition) {
             saveCurrentResumePosition()
         }
+        streamRefreshJob?.cancel()
+        streamRefreshJob = null
 
         val itemKey = mediaKey(item)
         val effectiveStartPositionMs = startPositionMs ?: resumePositionStore.getResumePosition(itemKey)
@@ -991,6 +1085,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             !state.showExitConfirmDialog &&
             !isShuttingDown &&
             state.downloadModalTarget == null &&
+            state.shareModalTarget == null &&
             state.localFfmpegJob.targetFile == null
     }
 
@@ -1139,6 +1234,109 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun clearHistory() {
         persistenceRepo.saveHistory(emptyList())
         _uiState.update { it.copy(history = emptyList()) }
+    }
+
+    // --- Share & Cast Modal ---
+    private fun extractDirectVideoUrl(streams: ResolvedStreams?): String? {
+        if (streams == null) return null
+        return streams.progressiveUrl.takeIf { it.isNotBlank() }
+            ?: streams.fastVideoAttempts.firstOrNull { !it.isAudioOnly && it.audioUrl.isBlank() }?.videoUrl?.takeIf { it.isNotBlank() }
+            ?: streams.videoUrl.takeIf { it.isNotBlank() }
+            ?: streams.fastVideoUrl.takeIf { it.isNotBlank() }
+    }
+
+    private fun extractDirectAudioUrl(streams: ResolvedStreams?): String? {
+        if (streams == null) return null
+        return streams.audioUrl.takeIf { it.isNotBlank() }
+            ?: streams.audioAttempts.firstOrNull()?.videoUrl?.takeIf { it.isNotBlank() }
+            ?: streams.progressiveUrl.takeIf { it.isNotBlank() }
+    }
+
+    fun openShareModal(item: MediaItem) {
+        shareResolveJob?.cancel()
+        shareResolveJob = null
+
+        if (item.isLocal) {
+            _uiState.update {
+                it.copy(
+                    shareModalTarget = item,
+                    shareResolvedVideoUrl = item.localPath.takeIf { p -> p.isNotBlank() },
+                    shareResolvedAudioUrl = item.localPath.takeIf { p -> p.isNotBlank() },
+                    isResolvingShareStream = false
+                )
+            }
+            return
+        }
+
+        val currentState = _uiState.value
+        val matchedStreams = if (currentState.currentMedia?.url == item.url) {
+            currentState.currentStreams
+        } else {
+            null
+        }
+
+        _uiState.update {
+            it.copy(
+                shareModalTarget = item,
+                shareResolvedVideoUrl = extractDirectVideoUrl(matchedStreams),
+                shareResolvedAudioUrl = extractDirectAudioUrl(matchedStreams),
+                isResolvingShareStream = false
+            )
+        }
+    }
+
+    fun resolveShareStreams(item: MediaItem? = _uiState.value.shareModalTarget) {
+        val target = item ?: return
+        if (target.isLocal || target.url.isBlank()) return
+
+        val state = _uiState.value
+        if (state.currentMedia?.url == target.url && state.currentStreams != null) {
+            val videoUrl = extractDirectVideoUrl(state.currentStreams)
+            val audioUrl = extractDirectAudioUrl(state.currentStreams)
+            if (!videoUrl.isNullOrBlank() || !audioUrl.isNullOrBlank()) {
+                _uiState.update {
+                    it.copy(
+                        shareResolvedVideoUrl = videoUrl,
+                        shareResolvedAudioUrl = audioUrl,
+                        isResolvingShareStream = false
+                    )
+                }
+                return
+            }
+        }
+
+        shareResolveJob?.cancel()
+        _uiState.update { it.copy(isResolvingShareStream = true) }
+        shareResolveJob = viewModelScope.launch {
+            try {
+                val streams = ytDlpRepo.resolveMediaStreams(target.url)
+                if (_uiState.value.shareModalTarget?.url != target.url) return@launch
+                _uiState.update {
+                    it.copy(
+                        shareResolvedVideoUrl = extractDirectVideoUrl(streams),
+                        shareResolvedAudioUrl = extractDirectAudioUrl(streams),
+                        isResolvingShareStream = false
+                    )
+                }
+            } catch (_: Exception) {
+                if (_uiState.value.shareModalTarget?.url == target.url) {
+                    _uiState.update { it.copy(isResolvingShareStream = false) }
+                }
+            }
+        }
+    }
+
+    fun closeShareModal() {
+        shareResolveJob?.cancel()
+        shareResolveJob = null
+        _uiState.update {
+            it.copy(
+                shareModalTarget = null,
+                shareResolvedVideoUrl = null,
+                shareResolvedAudioUrl = null,
+                isResolvingShareStream = false
+            )
+        }
     }
 
     // --- Downloads & FFmpeg ---
@@ -1407,17 +1605,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 showCookiesDialog = false,
                 showReadmeDialog = false,
                 downloadModalTarget = null,
+                shareModalTarget = null,
+                shareResolvedVideoUrl = null,
+                shareResolvedAudioUrl = null,
+                isResolvingShareStream = false,
                 localFfmpegJob = LocalFfmpegJobState(),
                 isVoiceListening = false,
                 isPlaying = false
             )
         }
 
-        // 3) Cancel sleep timer and search coroutines
+        // 3) Cancel sleep timer, stream refresh, share resolution and search coroutines
         sleepTimerJob?.cancel()
         sleepTimerJob = null
         searchJob?.cancel()
         searchJob = null
+        autoBannerJob?.cancel()
+        autoBannerJob = null
+        streamRefreshJob?.cancel()
+        streamRefreshJob = null
+        shareResolveJob?.cancel()
+        shareResolveJob = null
 
         // 4) Cancel active yt-dlp downloads and local FFmpeg jobs
         _uiState.value.downloads
@@ -1455,6 +1663,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         sleepTimerJob?.cancel()
         localFfmpegCoroutineJob?.cancel()
         searchJob?.cancel()
+        autoBannerJob?.cancel()
+        streamRefreshJob?.cancel()
+        shareResolveJob?.cancel()
         localFfmpegProcessor.cancelAll()
         voiceSearchController?.destroy()
         voiceSearchController = null

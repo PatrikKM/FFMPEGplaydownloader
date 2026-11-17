@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Equalizer
 import androidx.compose.material.icons.filled.Fullscreen
@@ -91,6 +92,7 @@ fun PlayerSection(
     onOpenSleepTimerAndSpeed: () -> Unit,
     onEnterPip: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onOpenShare: () -> Unit,
     onOpenDownload: () -> Unit,
     onToggleFullscreen: () -> Unit,
     modifier: Modifier = Modifier
@@ -395,6 +397,7 @@ fun PlayerSection(
                 onOpenSleepTimerAndSpeed = onOpenSleepTimerAndSpeed,
                 onEnterPip = onEnterPip,
                 onToggleFavorite = onToggleFavorite,
+                onOpenShare = onOpenShare,
                 onOpenDownload = onOpenDownload,
                 onToggleFullscreen = onToggleFullscreen
             )
@@ -482,6 +485,7 @@ private fun StreamOptionsBar(
     onOpenSleepTimerAndSpeed: () -> Unit,
     onEnterPip: () -> Unit,
     onToggleFavorite: () -> Unit,
+    onOpenShare: () -> Unit,
     onOpenDownload: () -> Unit,
     onToggleFullscreen: () -> Unit
 ) {
@@ -623,6 +627,22 @@ private fun StreamOptionsBar(
                 fontSize = 11.sp,
                 color = if (isFavorite) AppColors.GoldStar else AppColors.TextPrimary
             )
+        }
+
+        OutlinedButton(
+            onClick = onOpenShare,
+            enabled = currentExists,
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
+            modifier = Modifier.height(36.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Cast,
+                contentDescription = null,
+                tint = AppColors.PrimaryBlue,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(Modifier.width(4.dp))
+            Text("Sdílet / Cast", fontSize = 11.sp, color = AppColors.TextPrimary)
         }
 
         Button(
