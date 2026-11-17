@@ -5,6 +5,8 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
+import android.net.Uri
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -48,6 +50,7 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.GraphicEq
+import androidx.compose.material.icons.filled.LocalCafe
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.MicOff
 import androidx.compose.material.icons.filled.MusicNote
@@ -129,6 +132,8 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+
+private const val BUY_ME_A_COFFEE_URL = "https://buymeacoffee.com/patrikmohler"
 
 @Composable
 fun MainScreen(viewModel: MainViewModel) {
@@ -273,6 +278,23 @@ fun MainScreen(viewModel: MainViewModel) {
                     onUpdateClick = viewModel::checkAndAutoUpdateYtDlp,
                     onCookiesClick = viewModel::openCookiesDialog,
                     onReadmeClick = viewModel::openReadmeDialog,
+                    onBuyMeACoffeeClick = {
+                        try {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse(BUY_ME_A_COFFEE_URL)
+                            ).apply {
+                                if (context !is Activity) {
+                                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                }
+                            }
+                            context.startActivity(intent)
+                        } catch (_: ActivityNotFoundException) {
+                            viewModel.showStatusBanner("☕ V zařízení nebyl nalezen prohlížeč pro otevření $BUY_ME_A_COFFEE_URL")
+                        } catch (_: Exception) {
+                            viewModel.showStatusBanner("☕ Nepodařilo se otevřít odkaz $BUY_ME_A_COFFEE_URL")
+                        }
+                    },
                     onExitClick = viewModel::requestExitApp
                 )
 
@@ -960,6 +982,7 @@ private fun TopStudioHeader(
     onUpdateClick: () -> Unit,
     onCookiesClick: () -> Unit,
     onReadmeClick: () -> Unit,
+    onBuyMeACoffeeClick: () -> Unit,
     onExitClick: () -> Unit
 ) {
     Column(
@@ -1115,7 +1138,45 @@ private fun TopStudioHeader(
                 labelColor = AppColors.TextPrimary,
                 onClick = onReadmeClick
             )
+            BuyMeACoffeePill(onClick = onBuyMeACoffeeClick)
         }
+    }
+}
+
+@Composable
+private fun BuyMeACoffeePill(
+    onClick: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(
+                Brush.horizontalGradient(
+                    listOf(
+                        Color(0xFF3A2A10),
+                        AppColors.GoldStar.copy(alpha = 0.16f)
+                    )
+                )
+            )
+            .border(1.dp, AppColors.GoldStar.copy(alpha = 0.6f), RoundedCornerShape(50))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 9.dp, vertical = 3.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Default.LocalCafe,
+            contentDescription = "Buy Me a Coffee",
+            tint = AppColors.GoldStar,
+            modifier = Modifier.size(12.dp)
+        )
+        Spacer(Modifier.width(4.dp))
+        Text(
+            text = "☕ Buy Me a Coffee",
+            color = AppColors.GoldStar,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1
+        )
     }
 }
 

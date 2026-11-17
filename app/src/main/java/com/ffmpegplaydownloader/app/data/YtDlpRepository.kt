@@ -244,6 +244,24 @@ class YtDlpRepository(
         }
     }
 
+    private fun hasValidCodec(codec: String): Boolean =
+        codec.isNotBlank() &&
+            !codec.equals("none", ignoreCase = true) &&
+            !codec.equals("null", ignoreCase = true)
+
+    private fun JSONObject?.optCleanString(key: String): String {
+        val value = this?.optString(key).orEmpty()
+        return if (value.equals("null", ignoreCase = true)) "" else value
+    }
+
+    private fun mp4FormatSelector(maxHeight: Int? = null): String {
+        if (maxHeight == null) {
+            return "bestvideo[ext=mp4]+bestaudio[ext=m4a]/bestvideo+bestaudio[ext=m4a]/bestvideo+bestaudio/best"
+        }
+        val h = "[height<=$maxHeight]"
+        return "bestvideo$h[ext=mp4]+bestaudio[ext=m4a]/bestvideo$h+bestaudio[ext=m4a]/bestvideo$h+bestaudio/best$h/best"
+    }
+
     suspend fun resolveMediaStreams(mediaUrl: String, maxHeight: Int = 1080): ResolvedStreams =
         withContext(Dispatchers.IO) {
             val cacheKey = "$mediaUrl::$maxHeight"
@@ -276,66 +294,151 @@ class YtDlpRepository(
                 val abr: Double,
                 val protocol: String,
                 val userAgent: String,
-                val referer: String
+                val referer: String,
+                val cookie: String
             )
 
             val candidates = mutableListOf<FormatCandidate>()
             if (formatsArr != null) {
                 for (i in 0 until formatsArr.length()) {
                     val f = formatsArr.optJSONObject(i) ?: continue
-                    val u = f.optString("url")
+                    val u = f.optCleanString("url")
                     if (u.isBlank()) continue
                     val headers = f.optJSONObject("http_headers")
                     candidates.add(
                         FormatCandidate(
                             url = u,
-                            ext = f.optString("ext"),
+                            ext = f.optCleanString("ext").lowercase(),
                             vcodec = f.optString("vcodec", "none"),
                             acodec = f.optString("acodec", "none"),
                             height = f.optInt("height", 0),
                             tbr = f.optDouble("tbr", 0.0).let { if (it.isNaN()) 0.0 else it },
                             abr = f.optDouble("abr", 0.0).let { if (it.isNaN()) 0.0 else it },
-                            protocol = f.optString("protocol"),
-                            userAgent = headers?.optString("User-Agent").orEmpty(),
-                            referer = headers?.optString("Referer").orEmpty()
+                            protocol = f.optCleanString("protocol"),
+                            userAgent = headers.optCleanString("User-Agent"),
+                            referer = headers.optCleanString("Referer"),
+                            cookie = headers.optCleanString("Cookie").ifBlank { headers.optCleanString("cookie") }
                         )
                     )
                 }
             }
 
-            val progressive = candidates
+            val nonHlsProgressive = candidates
                 .filter {
-                    it.vcodec != "none" && it.acodec != "none" &&
+                    hasValidCodec(it.vcodec) && hasValidCodec(it.acodec) &&
+                        !it.protocol.contains("m3u8", ignoreCase = true) &&
                         (it.ext == "mp4" || it.ext == "webm")
                 }
-                .sortedWith(compareByDescending<FormatCandidate> { it.height }.thenByDescending { it.tbr })
+                .sortedWith(
+                    compareByDescending<FormatCandidate> { it.ext == "mp4" }
+                        .thenByDescending { it.height }
+                        .thenByDescending { it.tbr }
+                )
                 .firstOrNull()
 
-            val videoOnly = candidates
+            val fastVideoOnly = candidates
                 .filter {
-                    it.vcodec != "none" &&
-                        (it.height == 0 || it.height <= maxHeight) &&
-                        !it.protocol.contains("m3u8_native")
+                    !it.protocol.contains("m3u8", ignoreCase = true) &&
+                        hasValidCodec(it.vcodec) && !hasValidCodec(it.acodec) &&
+                        (it.height == 0 || it.height <= 720)
                 }
-                .sortedWith(compareByDescending<FormatCandidate> { it.height }.thenByDescending { it.tbr })
+                .sortedWith(
+                    compareByDescending<FormatCandidate> { it.ext == "mp4" }
+                        .thenByDescending { it.height }
+                        .thenByDescending { it.tbr }
+                )
                 .firstOrNull()
 
-            val audioCandidates = candidates
-                .filter { it.acodec != "none" && it.vcodec == "none" }
-                .sortedWith(compareByDescending<FormatCandidate> { maxOf(it.abr, it.tbr) })
-            val audioOnly = audioCandidates
-                .firstOrNull { !it.protocol.contains("m3u8") }
-                ?: audioCandidates.firstOrNull()
+            val nonHlsVideoOnly = candidates
+                .filter {
+                    !it.protocol.contains("m3u8", ignoreCase = true) &&
+                        hasValidCodec(it.vcodec) &&
+                        (it.height == 0 || it.height <= maxHeight)
+                }
+                .sortedWith(
+                    compareByDescending<FormatCandidate> { !hasValidCodec(it.acodec) }
+                        .thenByDescending { it.ext == "mp4" }
+                        .thenByDescending { it.height }
+                        .thenByDescending { it.tbr }
+                )
+                .firstOrNull()
 
-            val fallbackUrl = info.optString("url")
+            val nonHlsAudioOnly = candidates
+                .filter {
+                    !it.protocol.contains("m3u8", ignoreCase = true) &&
+                        hasValidCodec(it.acodec) && !hasValidCodec(it.vcodec)
+                }
+                .sortedWith(
+                    compareByDescending<FormatCandidate> { it.ext == "m4a" || it.ext == "mp4" }
+                        .thenByDescending { maxOf(it.abr, it.tbr) }
+                )
+                .firstOrNull()
+
+            val hlsProgressive = if (nonHlsProgressive == null && (nonHlsVideoOnly == null || nonHlsAudioOnly == null)) {
+                candidates
+                    .filter {
+                        hasValidCodec(it.vcodec) && hasValidCodec(it.acodec) &&
+                            it.protocol.contains("m3u8", ignoreCase = true) &&
+                            (it.height == 0 || it.height <= maxHeight)
+                    }
+                    .sortedWith(compareByDescending<FormatCandidate> { it.height }.thenByDescending { it.tbr })
+                    .firstOrNull()
+            } else null
+
+            val progressive = nonHlsProgressive ?: hlsProgressive
+
+            val videoOnly = nonHlsVideoOnly ?: if (hlsProgressive == null) {
+                candidates
+                    .filter {
+                        hasValidCodec(it.vcodec) &&
+                            (it.height == 0 || it.height <= maxHeight)
+                    }
+                    .sortedWith(
+                        compareByDescending<FormatCandidate> { !hasValidCodec(it.acodec) }
+                            .thenByDescending { it.ext == "mp4" }
+                            .thenByDescending { it.height }
+                            .thenByDescending { it.tbr }
+                    )
+                    .firstOrNull()
+            } else null
+
+            val audioOnly = nonHlsAudioOnly ?: if (hlsProgressive == null) {
+                candidates
+                    .filter { hasValidCodec(it.acodec) && !hasValidCodec(it.vcodec) }
+                    .sortedWith(
+                        compareByDescending<FormatCandidate> { it.ext == "m4a" || it.ext == "mp4" }
+                            .thenByDescending { maxOf(it.abr, it.tbr) }
+                    )
+                    .firstOrNull()
+            } else null
+
+            val rawFallbackUrl = info.optCleanString("url")
+            val topHasVideo = hasValidCodec(info.optString("vcodec", "none"))
+            val topHasAudio = hasValidCodec(info.optString("acodec", "none"))
+            val topProtocol = info.optCleanString("protocol")
+            val topAllowedForProgressive = !topProtocol.contains("m3u8", ignoreCase = true) ||
+                nonHlsVideoOnly == null || nonHlsAudioOnly == null
+            val fallbackUrl = if (rawFallbackUrl.isNotBlank() && topHasVideo && topHasAudio && topAllowedForProgressive) {
+                rawFallbackUrl
+            } else ""
+
             val topHeaders = info.optJSONObject("http_headers")
             val ua = progressive?.userAgent?.ifBlank { null }
+                ?: fastVideoOnly?.userAgent?.ifBlank { null }
+                ?: videoOnly?.userAgent?.ifBlank { null }
                 ?: audioOnly?.userAgent?.ifBlank { null }
-                ?: topHeaders?.optString("User-Agent")?.ifBlank { null }
+                ?: topHeaders.optCleanString("User-Agent").ifBlank { null }
                 ?: "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 Chrome/126.0.0.0 Mobile Safari/537.36"
             val ref = progressive?.referer?.ifBlank { null }
+                ?: fastVideoOnly?.referer?.ifBlank { null }
+                ?: videoOnly?.referer?.ifBlank { null }
                 ?: audioOnly?.referer?.ifBlank { null }
-                ?: topHeaders?.optString("Referer").orEmpty()
+                ?: topHeaders.optCleanString("Referer")
+            val cookieHeader = progressive?.cookie?.ifBlank { null }
+                ?: fastVideoOnly?.cookie?.ifBlank { null }
+                ?: videoOnly?.cookie?.ifBlank { null }
+                ?: audioOnly?.cookie?.ifBlank { null }
+                ?: topHeaders.optCleanString("Cookie").ifBlank { topHeaders.optCleanString("cookie") }
 
             val durSec = info.optDouble("duration", 0.0).let { if (it.isNaN() || it < 0) 0L else it.toLong() }
 
@@ -348,6 +451,9 @@ class YtDlpRepository(
                 isInputYtmUrl = mediaUrl.contains("music.youtube.com", ignoreCase = true)
             )
 
+            val resolvedAudioUrl = audioOnly?.url
+                ?: progressive?.url
+                ?: if (rawFallbackUrl.isNotBlank() && topHasAudio) rawFallbackUrl else ""
             val resolved = ResolvedStreams(
                 id = info.optString("id"),
                 title = info.optString("title", "Bez názvu"),
@@ -356,12 +462,14 @@ class YtDlpRepository(
                 durationString = info.optString("duration_string").ifBlank { formatDuration(durSec) },
                 thumbnail = info.optString("thumbnail"),
                 progressiveUrl = progressive?.url ?: fallbackUrl,
-                videoUrl = videoOnly?.url ?: progressive?.url ?: fallbackUrl,
-                audioUrl = audioOnly?.url ?: progressive?.url ?: fallbackUrl,
+                videoUrl = videoOnly?.url ?: progressive?.url ?: if (rawFallbackUrl.isNotBlank() && topHasVideo) rawFallbackUrl else "",
+                audioUrl = resolvedAudioUrl,
                 userAgent = ua,
                 referer = ref,
                 czechSubtitles = czechSubtitles,
-                platform = resolvedPlatform
+                platform = resolvedPlatform,
+                fastVideoUrl = fastVideoOnly?.url ?: videoOnly?.url.orEmpty(),
+                cookieHeader = cookieHeader
             )
 
             streamCache[cacheKey] = CachedStream(resolved, System.currentTimeMillis() + 25 * 60 * 1000L)
@@ -469,22 +577,22 @@ class YtDlpRepository(
                     addOption("--add-metadata")
                 }
                 DownloadFormat.MP4_BEST -> {
-                    addOption("-f", "bestvideo+bestaudio/best")
+                    addOption("-f", mp4FormatSelector())
                     addOption("--merge-output-format", "mp4")
                     addOption("--add-metadata")
                 }
                 DownloadFormat.MP4_1080 -> {
-                    addOption("-f", "bestvideo[height<=1080]+bestaudio/best[height<=1080]/best")
+                    addOption("-f", mp4FormatSelector(1080))
                     addOption("--merge-output-format", "mp4")
                     addOption("--add-metadata")
                 }
                 DownloadFormat.MP4_720 -> {
-                    addOption("-f", "bestvideo[height<=720]+bestaudio/best[height<=720]/best")
+                    addOption("-f", mp4FormatSelector(720))
                     addOption("--merge-output-format", "mp4")
                     addOption("--add-metadata")
                 }
                 DownloadFormat.MP4_480 -> {
-                    addOption("-f", "bestvideo[height<=480]+bestaudio/best[height<=480]/best")
+                    addOption("-f", mp4FormatSelector(480))
                     addOption("--merge-output-format", "mp4")
                     addOption("--add-metadata")
                 }

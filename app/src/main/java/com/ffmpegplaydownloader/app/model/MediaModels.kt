@@ -71,7 +71,9 @@ data class ResolvedStreams(
     val userAgent: String,
     val referer: String,
     val czechSubtitles: SubtitleInfo,
-    val platform: MediaPlatform = MediaPlatform.YOUTUBE
+    val platform: MediaPlatform = MediaPlatform.YOUTUBE,
+    val fastVideoUrl: String = "",
+    val cookieHeader: String = ""
 )
 
 enum class StreamMode(val label: String) {

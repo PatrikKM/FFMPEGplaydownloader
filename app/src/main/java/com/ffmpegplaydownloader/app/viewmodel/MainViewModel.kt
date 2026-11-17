@@ -156,6 +156,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     )
                 )
             }
+        },
+        onPlaybackError = { errMsg ->
+            _uiState.update { it.copy(streamError = errMsg) }
         }
     )
 
@@ -253,6 +256,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+    }
+
+    fun showStatusBanner(message: String) {
+        _uiState.update { it.copy(statusBanner = message) }
     }
 
     fun dismissBanner() {

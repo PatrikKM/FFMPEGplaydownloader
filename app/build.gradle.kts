@@ -21,8 +21,8 @@ android {
         applicationId = "com.ffmpegplaydownloader.app"
         minSdk = 24
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.7.0"
+        versionCode = 10
+        versionName = "1.7.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -100,9 +100,11 @@ dependencies {
     implementation("io.github.junkfood02.youtubedl-android:library:$youtubedlVersion")
     implementation("io.github.junkfood02.youtubedl-android:ffmpeg:$youtubedlVersion")
 
-    // Media3 ExoPlayer (video/audio streaming, DASH merging, WebVTT subtitles, background MediaSessionService)
+    // Media3 ExoPlayer (video/audio streaming, DASH/HLS merging, WebVTT subtitles, background MediaSessionService)
     val media3Version = "1.5.1"
     implementation("androidx.media3:media3-exoplayer:$media3Version")
+    implementation("androidx.media3:media3-exoplayer-hls:$media3Version")
+    implementation("androidx.media3:media3-exoplayer-dash:$media3Version")
     implementation("androidx.media3:media3-ui:$media3Version")
     implementation("androidx.media3:media3-common:$media3Version")
     implementation("androidx.media3:media3-session:$media3Version")

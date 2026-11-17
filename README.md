@@ -1,8 +1,8 @@
-# FFMPEGplaydownloader (v1.7.0)
+# FFMPEGplaydownloader (v1.7.2)
 
 Samostatná univerzální Android aplikace (APK) v **Kotlinu** a **Jetpack Compose** s vestavěným **`yt-dlp`**, **`FFmpeg`** (`youtubedl-android 0.18.1`) a přehrávačem **`Media3 ExoPlayer 1.5.1`**.
 
-> Aktuální verze: **`1.7.0`** (`versionCode = 8`) • Balíček: `com.ffmpegplaydownloader.app` • Android **7.0+ (API 24–35)**
+> Aktuální verze: **`1.7.2`** (`versionCode = 10`) • Balíček: `com.ffmpegplaydownloader.app` • Android **7.0+ (API 24–35)**
 
 ---
 
@@ -19,6 +19,7 @@ Samostatná univerzální Android aplikace (APK) v **Kotlinu** a **Jetpack Compo
 - [Architektura projektu](#architektura-projektu)
 - [Oprávnění v AndroidManifest.xml](#oprávnění-v-androidmanifestxml)
 - [Sestavení, podepsání (`apksigner`) a instalace přes ADB](#sestavení-podepsání-apksigner-a-instalace-přes-adb)
+- [Podpora projektu](#podpora-projektu)
 
 ---
 
@@ -54,7 +55,7 @@ Minimální verze systému je **Android 7.0 (`minSdk = 24`)**, cílová a kompil
 
 ### 2. Přehrávač Media3 ExoPlayer, Fullscreen, PiP & Pozadí
 - **Tři režimy streamování (`StreamMode`)** (`MediaPlayerController`):
-  - `⚡ Rychlé video (MP4)` — progresivní stream s okamžitým startem.
+  - `⚡ Rychlé video (MP4)` — progresivní stream s okamžitým startem; pokud samostatný progresivní MP4 neobsahuje zvuk (nebo selže), automaticky přechází na sloučení MP4 videa a zvuku (`MergingMediaSource`) s podporou HLS/DASH modulů Media3 (`media3-exoplayer-hls`, `media3-exoplayer-dash`).
   - `🎞️ HQ Mux (1080p+ video+zvuk)` — oddělený obrazový a zvukový DASH stream sloučený v reálném čase přes `MergingMediaSource`.
   - `🎵 Pouze zvuk (Audio stream)` — úsporný poslech bez videa se zobrazením náhledu a štítku platformy.
 - **Časová osa a rychlé skoky**: interaktivní posuvník a tlačítka `⏮ 0:00`, `-30s`, `-10s`, Play/Pause, `+10s`, `+30s`.
@@ -108,6 +109,8 @@ Minimální verze systému je **Android 7.0 (`minSdk = 24`)**, cílová a kompil
 - **📖 README / Nápověda přímo v aplikaci (`ReadmeDialog` v `TopStudioHeader`, novinka v1.7.0)**:
   - Kliknutím na štítek **📖 README** v hlavičce aplikace (vedle **🍪 Cookies**) se otevře vestavěný prohlížeč dokumentace (`ReadmeDialog`), který načítá aktuální `README.md` přibalený přímo v APK (`assets/README.md`, synchronizováno při sestavení úlohou `syncReadmeToAssets`).
   - Podporuje živé vyhledávání (`"Hledat v README..."`), formátované vykreslení Markdownu (nadpisy, seznamy, citace, tabulky, oddělovače, vodorovně posuvné bloky kódu) i tlačítko **Kopírovat** pro zkopírování celého obsahu do schránky.
+- **☕ Buy Me a Coffee (`BuyMeACoffeePill` v `TopStudioHeader`, novinka v1.7.1)**:
+  - Hned vedle tlačítka **📖 README** je v hlavičce umístěno teplé kávové tlačítko **☕ Buy Me a Coffee** (s ikonou horkého šálku `Icons.Default.LocalCafe`), které bezpečně otevře stránku podpory [`https://buymeacoffee.com/patrikmohler`](https://buymeacoffee.com/patrikmohler) v externím prohlížeči (`Intent.ACTION_VIEW` s ošetřením `ActivityNotFoundException` a záložním stavovým bannerem).
 - **⏻ Elegantní ukončení aplikace (`Ukončit` v `TopStudioHeader`, novinka v1.6.0)**:
   - Tlačítko **Ukončit** (`Icons.Default.PowerSettingsNew`) v pravém horním rohu hlavičky zobrazí potvrzovací dialog (`"Ukončit aplikaci?"`), který upozorní i na případné běžící úlohy stahování nebo lokálního FFmpeg zpracování.
   - Po potvrzení (`MainViewModel.confirmExitApp()`):
@@ -226,3 +229,10 @@ adb devices
 adb install -r app\build\outputs\apk\release\app-release.apk
 ```
 *(Pro Debug variantu nahraďte cestu za `app\build\outputs\apk\debug\app-debug.apk`.)*
+
+---
+
+## Podpora projektu
+
+Pokud vám **FFMPEGplaydownloader** pomáhá a chcete podpořit další vývoj:
+- ☕ **Buy Me a Coffee**: [`https://buymeacoffee.com/patrikmohler`](https://buymeacoffee.com/patrikmohler) (dostupné také přímo přes tlačítko **☕ Buy Me a Coffee** v horní liště aplikace).

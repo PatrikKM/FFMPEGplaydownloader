@@ -12,13 +12,15 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem as ExoMediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.MimeTypes
+import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.MergingMediaSource
-import androidx.media3.exoplayer.source.ProgressiveMediaSource
 import androidx.media3.exoplayer.source.SingleSampleMediaSource
 import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
@@ -34,7 +36,8 @@ import java.util.Locale
 class MediaPlayerController(
     context: Context,
     private val onPlaybackEnded: () -> Unit,
-    private val onHardwareEqualizerReady: (minMb: Int, maxMb: Int, hardwareBands: List<EqualizerBand>) -> Unit = { _, _, _ -> }
+    private val onHardwareEqualizerReady: (minMb: Int, maxMb: Int, hardwareBands: List<EqualizerBand>) -> Unit = { _, _, _ -> },
+    private val onPlaybackError: (String) -> Unit = {}
 ) {
     private val appContext = context.applicationContext
     val exoPlayer: ExoPlayer = PlayerEngine.getOrCreatePlayer(appContext)
@@ -49,6 +52,11 @@ class MediaPlayerController(
     private var activeAudioSessionId: Int = C.AUDIO_SESSION_ID_UNSET
     private var currentEqualizerState: EqualizerState = EqualizerState()
 
+    private var lastOnlineStreams: ResolvedStreams? = null
+    private var lastStreamMode: StreamMode = StreamMode.FAST_VIDEO
+    private var lastSubtitlesEnabled: Boolean = true
+    private var didFastVideoFallbackToMerge: Boolean = false
+
     private val playerListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             if (playbackState == Player.STATE_ENDED) {
@@ -60,6 +68,31 @@ class MediaPlayerController(
             if (audioSessionId != C.AUDIO_SESSION_ID_UNSET && audioSessionId != 0) {
                 applyEqualizerState(currentEqualizerState)
             }
+        }
+
+        override fun onTracksChanged(tracks: Tracks) {
+            val streams = lastOnlineStreams ?: return
+            if (lastStreamMode != StreamMode.FAST_VIDEO || didFastVideoFallbackToMerge) return
+
+            val hasVideoTrack = tracks.groups.any { it.type == C.TRACK_TYPE_VIDEO && it.length > 0 }
+            val hasAudioTrack = tracks.groups.any { it.type == C.TRACK_TYPE_AUDIO && it.length > 0 }
+            if (hasVideoTrack && !hasAudioTrack && streams.audioUrl.isNotBlank()) {
+                fallbackFastVideoToMerge()
+            }
+        }
+
+        override fun onPlayerError(error: PlaybackException) {
+            val streams = lastOnlineStreams
+            if (lastStreamMode == StreamMode.FAST_VIDEO &&
+                !didFastVideoFallbackToMerge &&
+                streams != null &&
+                streams.fastVideoUrl.isNotBlank() &&
+                streams.audioUrl.isNotBlank() &&
+                fallbackFastVideoToMerge()
+            ) {
+                return
+            }
+            onPlaybackError("Chyba přehrávače: ${error.errorCodeName}")
         }
     }
 
@@ -93,6 +126,8 @@ class MediaPlayerController(
         startPositionMs: Long = 0L
     ) {
         ensureBackgroundServiceConnected()
+        lastOnlineStreams = null
+        didFastVideoFallbackToMerge = false
         val uri = Uri.fromFile(File(filePath))
         val metadata = MediaMetadata.Builder()
             .setTitle(title)
@@ -111,25 +146,19 @@ class MediaPlayerController(
         exoPlayer.playWhenReady = true
     }
 
-    fun playOnlineStreams(
-        streams: ResolvedStreams,
-        streamMode: StreamMode,
-        subtitlesEnabled: Boolean,
-        startPositionMs: Long = 0L
-    ) {
-        ensureBackgroundServiceConnected()
-
+    private fun createHttpFactory(streams: ResolvedStreams): DefaultHttpDataSource.Factory {
         val headers = buildMap {
             if (streams.referer.isNotBlank()) put("Referer", streams.referer)
+            if (streams.cookieHeader.isNotBlank()) put("Cookie", streams.cookieHeader)
         }
-        val httpFactory = DefaultHttpDataSource.Factory()
+        return DefaultHttpDataSource.Factory()
             .setUserAgent(streams.userAgent)
             .setAllowCrossProtocolRedirects(true)
             .setDefaultRequestProperties(headers)
+    }
 
-        val mediaSourceFactory = DefaultMediaSourceFactory(httpFactory)
-
-        val metadata = MediaMetadata.Builder()
+    private fun buildMetadata(streams: ResolvedStreams): MediaMetadata =
+        MediaMetadata.Builder()
             .setTitle(streams.title)
             .setArtist(streams.channel)
             .apply {
@@ -139,71 +168,174 @@ class MediaPlayerController(
             }
             .build()
 
-        val subtitleConfig = if (subtitlesEnabled && streams.czechSubtitles.available && streams.czechSubtitles.url.isNotBlank()) {
-            val mime = when (streams.czechSubtitles.ext.lowercase()) {
-                "srt" -> MimeTypes.APPLICATION_SUBRIP
-                "ttml" -> MimeTypes.APPLICATION_TTML
-                else -> MimeTypes.TEXT_VTT
-            }
-            ExoMediaItem.SubtitleConfiguration.Builder(Uri.parse(streams.czechSubtitles.url))
-                .setMimeType(mime)
-                .setLanguage("cs")
-                .setLabel("Čeština")
-                .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
-                .build()
-        } else null
+    private fun buildSubtitleConfig(
+        streams: ResolvedStreams,
+        subtitlesEnabled: Boolean
+    ): ExoMediaItem.SubtitleConfiguration? {
+        if (!subtitlesEnabled || !streams.czechSubtitles.available || streams.czechSubtitles.url.isBlank()) {
+            return null
+        }
+        val mime = when (streams.czechSubtitles.ext.lowercase()) {
+            "srt" -> MimeTypes.APPLICATION_SUBRIP
+            "ttml" -> MimeTypes.APPLICATION_TTML
+            else -> MimeTypes.TEXT_VTT
+        }
+        return ExoMediaItem.SubtitleConfiguration.Builder(Uri.parse(streams.czechSubtitles.url))
+            .setMimeType(mime)
+            .setLanguage("cs")
+            .setLabel("Čeština")
+            .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
+            .build()
+    }
 
-        when (streamMode) {
+    private fun playMergedVideoAndAudio(
+        videoUri: String,
+        audioUri: String,
+        httpFactory: DefaultHttpDataSource.Factory,
+        mediaSourceFactory: DefaultMediaSourceFactory,
+        metadata: MediaMetadata,
+        subtitleConfig: ExoMediaItem.SubtitleConfiguration?
+    ): Boolean {
+        val sources = mutableListOf<MediaSource>()
+        val primaryUri = videoUri.ifBlank { audioUri }
+        val videoItem = ExoMediaItem.Builder()
+            .setUri(primaryUri)
+            .setMediaMetadata(metadata)
+            .build()
+
+        if (videoUri.isNotBlank() && audioUri.isNotBlank() && videoUri != audioUri) {
+            sources += mediaSourceFactory.createMediaSource(videoItem)
+            sources += mediaSourceFactory.createMediaSource(ExoMediaItem.fromUri(audioUri))
+        } else if (primaryUri.isNotBlank()) {
+            sources += mediaSourceFactory.createMediaSource(videoItem)
+        } else {
+            return false
+        }
+
+        if (subtitleConfig != null) {
+            sources += SingleSampleMediaSource.Factory(httpFactory)
+                .createMediaSource(subtitleConfig, C.TIME_UNSET)
+        }
+
+        when {
+            sources.size == 1 -> exoPlayer.setMediaSource(sources.first())
+            sources.isNotEmpty() -> exoPlayer.setMediaSource(MergingMediaSource(*sources.toTypedArray()))
+        }
+        return true
+    }
+
+    private fun fallbackFastVideoToMerge(): Boolean {
+        val streams = lastOnlineStreams ?: return false
+        if (lastStreamMode != StreamMode.FAST_VIDEO || didFastVideoFallbackToMerge) return false
+
+        val vUrl = streams.fastVideoUrl.ifBlank { streams.videoUrl }
+        val aUrl = streams.audioUrl
+        if (vUrl.isBlank() || aUrl.isBlank() || (vUrl == streams.progressiveUrl && aUrl == streams.progressiveUrl)) {
+            return false
+        }
+
+        didFastVideoFallbackToMerge = true
+        val resumePos = exoPlayer.currentPosition.coerceAtLeast(0L)
+        val httpFactory = createHttpFactory(streams)
+        val mediaSourceFactory = DefaultMediaSourceFactory(httpFactory)
+        val metadata = buildMetadata(streams)
+        val subtitleConfig = buildSubtitleConfig(streams, lastSubtitlesEnabled)
+
+        playMergedVideoAndAudio(
+            videoUri = vUrl,
+            audioUri = aUrl,
+            httpFactory = httpFactory,
+            mediaSourceFactory = mediaSourceFactory,
+            metadata = metadata,
+            subtitleConfig = subtitleConfig
+        )
+        setSubtitlesEnabled(lastSubtitlesEnabled)
+        exoPlayer.prepare()
+        if (resumePos > 0L) {
+            exoPlayer.seekTo(resumePos)
+        }
+        exoPlayer.playWhenReady = true
+        return true
+    }
+
+    fun playOnlineStreams(
+        streams: ResolvedStreams,
+        streamMode: StreamMode,
+        subtitlesEnabled: Boolean,
+        startPositionMs: Long = 0L
+    ) {
+        ensureBackgroundServiceConnected()
+        lastOnlineStreams = streams
+        lastStreamMode = streamMode
+        lastSubtitlesEnabled = subtitlesEnabled
+        didFastVideoFallbackToMerge = false
+
+        val httpFactory = createHttpFactory(streams)
+        val mediaSourceFactory = DefaultMediaSourceFactory(httpFactory)
+        val metadata = buildMetadata(streams)
+        val subtitleConfig = buildSubtitleConfig(streams, subtitlesEnabled)
+
+        val preparedSource = when (streamMode) {
             StreamMode.AUDIO_ONLY -> {
                 val url = streams.audioUrl.ifBlank { streams.progressiveUrl }
-                val item = ExoMediaItem.Builder()
-                    .setUri(url)
-                    .setMediaMetadata(metadata)
-                    .build()
-                exoPlayer.setMediaSource(mediaSourceFactory.createMediaSource(item))
+                if (url.isBlank()) {
+                    false
+                } else {
+                    val item = ExoMediaItem.Builder()
+                        .setUri(url)
+                        .setMediaMetadata(metadata)
+                        .build()
+                    exoPlayer.setMediaSource(mediaSourceFactory.createMediaSource(item))
+                    true
+                }
             }
             StreamMode.HQ_DASH_VIDEO -> {
                 val vUrl = streams.videoUrl.ifBlank { streams.progressiveUrl }
                 val aUrl = streams.audioUrl.ifBlank { streams.progressiveUrl }
-                val sources = mutableListOf<androidx.media3.exoplayer.source.MediaSource>()
-
-                val videoItem = ExoMediaItem.Builder()
-                    .setUri(vUrl)
-                    .setMediaMetadata(metadata)
-                    .build()
-
-                if (vUrl.isNotBlank() && aUrl.isNotBlank() && vUrl != aUrl) {
-                    sources += ProgressiveMediaSource.Factory(httpFactory)
-                        .createMediaSource(videoItem)
-                    sources += ProgressiveMediaSource.Factory(httpFactory)
-                        .createMediaSource(ExoMediaItem.fromUri(aUrl))
-                } else {
-                    sources += mediaSourceFactory.createMediaSource(videoItem)
-                }
-
-                if (subtitleConfig != null) {
-                    sources += SingleSampleMediaSource.Factory(httpFactory)
-                        .createMediaSource(subtitleConfig, C.TIME_UNSET)
-                }
-                exoPlayer.setMediaSource(MergingMediaSource(*sources.toTypedArray()))
+                playMergedVideoAndAudio(
+                    videoUri = vUrl,
+                    audioUri = aUrl,
+                    httpFactory = httpFactory,
+                    mediaSourceFactory = mediaSourceFactory,
+                    metadata = metadata,
+                    subtitleConfig = subtitleConfig
+                )
             }
             StreamMode.FAST_VIDEO -> {
-                val url = streams.progressiveUrl.ifBlank { streams.videoUrl }
-                val builder = ExoMediaItem.Builder()
-                    .setUri(url)
-                    .setMediaMetadata(metadata)
-                if (subtitleConfig != null) {
-                    builder.setSubtitleConfigurations(listOf(subtitleConfig))
+                val fastCandidate = streams.fastVideoUrl.ifBlank { streams.videoUrl }
+                val hasSeparateAudio = streams.audioUrl.isNotBlank() && streams.audioUrl != streams.progressiveUrl
+                val useProgressiveDirect = streams.progressiveUrl.isNotBlank() &&
+                    !(streams.progressiveUrl == fastCandidate && hasSeparateAudio)
+
+                if (useProgressiveDirect) {
+                    val builder = ExoMediaItem.Builder()
+                        .setUri(streams.progressiveUrl)
+                        .setMediaMetadata(metadata)
+                    if (subtitleConfig != null) {
+                        builder.setSubtitleConfigurations(listOf(subtitleConfig))
+                    }
+                    exoPlayer.setMediaSource(mediaSourceFactory.createMediaSource(builder.build()))
+                    true
+                } else {
+                    didFastVideoFallbackToMerge = true
+                    playMergedVideoAndAudio(
+                        videoUri = fastCandidate,
+                        audioUri = streams.audioUrl.ifBlank { streams.progressiveUrl },
+                        httpFactory = httpFactory,
+                        mediaSourceFactory = mediaSourceFactory,
+                        metadata = metadata,
+                        subtitleConfig = subtitleConfig
+                    )
                 }
-                exoPlayer.setMediaSource(mediaSourceFactory.createMediaSource(builder.build()))
             }
         }
 
-        exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
-            .buildUpon()
-            .setPreferredTextLanguage(if (subtitlesEnabled) "cs" else null)
-            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, !subtitlesEnabled)
-            .build()
+        if (!preparedSource) {
+            onPlaybackError("Chyba přehrávače: Nebyla nalezena žádná přehratelná adresa streamu.")
+            return
+        }
+
+        setSubtitlesEnabled(subtitlesEnabled)
 
         exoPlayer.prepare()
         if (startPositionMs > 0) {
@@ -213,6 +345,7 @@ class MediaPlayerController(
     }
 
     fun setSubtitlesEnabled(enabled: Boolean) {
+        lastSubtitlesEnabled = enabled
         exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
             .buildUpon()
             .setPreferredTextLanguage(if (enabled) "cs" else null)
