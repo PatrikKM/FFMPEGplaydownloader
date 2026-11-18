@@ -19,6 +19,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
@@ -27,7 +28,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -35,7 +35,7 @@ import com.ffmpegplaydownloader.app.player.PlaybackExtrasManager
 import com.ffmpegplaydownloader.app.player.RepeatModeOption
 import com.ffmpegplaydownloader.app.player.SleepTimerPreset
 import com.ffmpegplaydownloader.app.player.formatRemainingTime
-import com.ffmpegplaydownloader.app.ui.theme.AppColors
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 import kotlin.math.abs
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -52,23 +52,24 @@ fun SleepTimerAndSpeedDialog(
     onSelectSleepTimer: (SleepTimerPreset) -> Unit,
     onDismiss: () -> Unit
 ) {
+    val colors = AppTheme.colors
     val isSleepTimerActive = sleepTimerPreset != SleepTimerPreset.OFF
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = AppColors.BgSurface,
+        containerColor = colors.bgSurface,
         title = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     "⏱️ Rychlost, opakování & časovač",
-                    color = AppColors.TextPrimary,
+                    color = colors.textPrimary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     "Rychlost ${PlaybackExtrasManager.formatSpeedLabel(playbackSpeed)} • ${repeatMode.label}" +
                         if (shuffleEnabled) " • Náhodně" else "",
-                    color = AppColors.TextSecondary,
+                    color = colors.textSecondary,
                     fontSize = 11.sp
                 )
             }
@@ -89,13 +90,13 @@ fun SleepTimerAndSpeedDialog(
                     ) {
                         Text(
                             "Rychlost přehrávání",
-                            color = AppColors.TextPrimary,
+                            color = colors.textPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             PlaybackExtrasManager.formatSpeedLabel(playbackSpeed),
-                            color = if (abs(playbackSpeed - 1.0f) > 0.01f) AppColors.PrimaryBlue else AppColors.TextSecondary,
+                            color = if (abs(playbackSpeed - 1.0f) > 0.01f) colors.primaryBlue else colors.textSecondary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -119,16 +120,18 @@ fun SleepTimerAndSpeedDialog(
                                     )
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = AppColors.BgElevated,
-                                    labelColor = AppColors.TextSecondary,
-                                    selectedContainerColor = AppColors.PrimaryBlue.copy(alpha = 0.25f),
-                                    selectedLabelColor = AppColors.TextPrimary
+                                    containerColor = colors.bgElevated,
+                                    labelColor = colors.textSecondary,
+                                    selectedContainerColor = colors.primaryBlue.copy(
+                                        alpha = if (colors.isDark) 0.25f else 0.15f
+                                    ),
+                                    selectedLabelColor = colors.textPrimary
                                 ),
                                 border = FilterChipDefaults.filterChipBorder(
                                     enabled = true,
                                     selected = selected,
-                                    borderColor = AppColors.Border,
-                                    selectedBorderColor = AppColors.PrimaryBlue
+                                    borderColor = colors.border,
+                                    selectedBorderColor = colors.primaryBlue
                                 ),
                                 modifier = Modifier.height(32.dp)
                             )
@@ -140,7 +143,7 @@ fun SleepTimerAndSpeedDialog(
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
                         "Opakování a pořadí",
-                        color = AppColors.TextPrimary,
+                        color = colors.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -163,16 +166,18 @@ fun SleepTimerAndSpeedDialog(
                                     )
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = AppColors.BgElevated,
-                                    labelColor = AppColors.TextSecondary,
-                                    selectedContainerColor = AppColors.PrimaryBlue.copy(alpha = 0.25f),
-                                    selectedLabelColor = AppColors.TextPrimary
+                                    containerColor = colors.bgElevated,
+                                    labelColor = colors.textSecondary,
+                                    selectedContainerColor = colors.primaryBlue.copy(
+                                        alpha = if (colors.isDark) 0.25f else 0.15f
+                                    ),
+                                    selectedLabelColor = colors.textPrimary
                                 ),
                                 border = FilterChipDefaults.filterChipBorder(
                                     enabled = true,
                                     selected = selected,
-                                    borderColor = AppColors.Border,
-                                    selectedBorderColor = AppColors.PrimaryBlue
+                                    borderColor = colors.border,
+                                    selectedBorderColor = colors.primaryBlue
                                 ),
                                 modifier = Modifier.height(32.dp)
                             )
@@ -183,10 +188,10 @@ fun SleepTimerAndSpeedDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(AppColors.BgElevated)
+                            .background(colors.bgElevated)
                             .border(
                                 width = 1.dp,
-                                color = if (shuffleEnabled) AppColors.PrimaryBlue else AppColors.Border,
+                                color = if (shuffleEnabled) colors.primaryBlue else colors.border,
                                 shape = RoundedCornerShape(8.dp)
                             )
                             .padding(horizontal = 12.dp, vertical = 6.dp),
@@ -196,13 +201,13 @@ fun SleepTimerAndSpeedDialog(
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 "🔀 Náhodné přehrávání",
-                                color = AppColors.TextPrimary,
+                                color = colors.textPrimary,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 if (shuffleEnabled) "Fronta se přehrává v náhodném pořadí" else "Přehrávání postupně podle fronty",
-                                color = AppColors.TextSecondary,
+                                color = colors.textSecondary,
                                 fontSize = 10.sp
                             )
                         }
@@ -210,10 +215,11 @@ fun SleepTimerAndSpeedDialog(
                             checked = shuffleEnabled,
                             onCheckedChange = onToggleShuffle,
                             colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = AppColors.PrimaryBlue,
-                                uncheckedThumbColor = AppColors.TextSecondary,
-                                uncheckedTrackColor = AppColors.BgSurface
+                                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                                checkedTrackColor = colors.primaryBlue,
+                                uncheckedThumbColor = colors.textSecondary,
+                                uncheckedTrackColor = colors.bgSurface,
+                                uncheckedBorderColor = colors.border
                             )
                         )
                     }
@@ -228,7 +234,7 @@ fun SleepTimerAndSpeedDialog(
                     ) {
                         Text(
                             "Časovač vypnutí",
-                            color = AppColors.TextPrimary,
+                            color = colors.textPrimary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -242,13 +248,13 @@ fun SleepTimerAndSpeedDialog(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(AppColors.WarningAmber.copy(alpha = 0.18f))
-                                    .border(1.dp, AppColors.WarningAmber, RoundedCornerShape(12.dp))
+                                    .background(colors.warningAmber.copy(alpha = 0.18f))
+                                    .border(1.dp, colors.warningAmber, RoundedCornerShape(12.dp))
                                     .padding(horizontal = 8.dp, vertical = 3.dp)
                             ) {
                                 Text(
                                     badgeText,
-                                    color = AppColors.WarningAmber,
+                                    color = colors.warningAmber,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -265,14 +271,14 @@ fun SleepTimerAndSpeedDialog(
                             val selected = sleepTimerPreset == preset
                             val activeNonOff = selected && preset != SleepTimerPreset.OFF
                             val selectedBg = if (activeNonOff) {
-                                AppColors.WarningAmber.copy(alpha = 0.22f)
+                                colors.warningAmber.copy(alpha = if (colors.isDark) 0.22f else 0.16f)
                             } else {
-                                AppColors.PrimaryBlue.copy(alpha = 0.25f)
+                                colors.primaryBlue.copy(alpha = if (colors.isDark) 0.25f else 0.15f)
                             }
                             val selectedBorder = if (activeNonOff) {
-                                AppColors.WarningAmber
+                                colors.warningAmber
                             } else {
-                                AppColors.PrimaryBlue
+                                colors.primaryBlue
                             }
 
                             FilterChip(
@@ -286,15 +292,15 @@ fun SleepTimerAndSpeedDialog(
                                     )
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = AppColors.BgElevated,
-                                    labelColor = AppColors.TextSecondary,
+                                    containerColor = colors.bgElevated,
+                                    labelColor = colors.textSecondary,
                                     selectedContainerColor = selectedBg,
-                                    selectedLabelColor = if (activeNonOff) AppColors.WarningAmber else AppColors.TextPrimary
+                                    selectedLabelColor = if (activeNonOff) colors.warningAmber else colors.textPrimary
                                 ),
                                 border = FilterChipDefaults.filterChipBorder(
                                     enabled = true,
                                     selected = selected,
-                                    borderColor = AppColors.Border,
+                                    borderColor = colors.border,
                                     selectedBorderColor = selectedBorder
                                 ),
                                 modifier = Modifier.height(32.dp)
@@ -313,15 +319,18 @@ fun SleepTimerAndSpeedDialog(
                     onSelectSleepTimer(SleepTimerPreset.OFF)
                 }
             ) {
-                Text("Reset", color = AppColors.TextSecondary)
+                Text("Reset", color = colors.textSecondary)
             }
         },
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.primaryBlue,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
-                Text("Hotovo", color = Color.White)
+                Text("Hotovo")
             }
         }
     )

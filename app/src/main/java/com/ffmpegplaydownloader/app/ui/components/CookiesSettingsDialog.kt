@@ -23,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -31,13 +32,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ffmpegplaydownloader.app.data.CookiesStatus
-import com.ffmpegplaydownloader.app.ui.theme.AppColors
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -51,6 +51,7 @@ fun CookiesSettingsDialog(
     onClearCookies: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val colors = AppTheme.colors
     val openDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
@@ -65,25 +66,25 @@ fun CookiesSettingsDialog(
         else -> "Nenahráno"
     }
     val statusColor = when {
-        status.hasFile && status.enabled -> AppColors.SuccessGreen
-        status.hasFile && !status.enabled -> AppColors.WarningAmber
-        else -> AppColors.TextSecondary
+        status.hasFile && status.enabled -> colors.successGreen
+        status.hasFile && !status.enabled -> colors.warningAmber
+        else -> colors.textSecondary
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = AppColors.BgSurface,
+        containerColor = colors.bgSurface,
         title = {
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     "🍪 Cookies (yt-dlp)",
-                    color = AppColors.TextPrimary,
+                    color = colors.textPrimary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
                     "Volitelné ověření relace pro yt-dlp",
-                    color = AppColors.TextSecondary,
+                    color = colors.textSecondary,
                     fontSize = 11.sp
                 )
             }
@@ -99,7 +100,7 @@ fun CookiesSettingsDialog(
                     text = "Můžete importovat vlastní soubor cookies.txt ve formátu Netscape z prohlížeče s ověřeným věkem. " +
                         "Cookies slouží pouze k autentizaci požadavků yt-dlp (přehrávání, stahování a přímé URL), " +
                         "nemění ostatní chování aplikace a zůstávají uloženy výhradně lokálně v soukromém úložišti aplikace.",
-                    color = AppColors.TextSecondary,
+                    color = colors.textSecondary,
                     fontSize = 12.sp,
                     lineHeight = 17.sp
                 )
@@ -109,8 +110,8 @@ fun CookiesSettingsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(AppColors.BgElevated)
-                        .border(1.dp, AppColors.Border, RoundedCornerShape(10.dp))
+                        .background(colors.bgElevated)
+                        .border(1.dp, colors.border, RoundedCornerShape(10.dp))
                         .padding(10.dp),
                     verticalArrangement = Arrangement.spacedBy(5.dp)
                 ) {
@@ -121,7 +122,7 @@ fun CookiesSettingsDialog(
                     ) {
                         Text(
                             "Stav cookies",
-                            color = AppColors.TextSecondary,
+                            color = colors.textSecondary,
                             fontSize = 11.sp
                         )
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -144,7 +145,7 @@ fun CookiesSettingsDialog(
                     if (status.hasFile) {
                         Text(
                             text = "Soubor: ${status.fileName.ifBlank { "cookies.txt" }}",
-                            color = AppColors.TextPrimary,
+                            color = colors.textPrimary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium,
                             maxLines = 1,
@@ -158,13 +159,13 @@ fun CookiesSettingsDialog(
                         }
                         Text(
                             text = "Záznamů: ${status.entryCount}$importedText",
-                            color = AppColors.TextSecondary,
+                            color = colors.textSecondary,
                             fontSize = 11.sp
                         )
                     } else {
                         Text(
                             text = "Žádný soubor cookies.txt není nahraný.",
-                            color = AppColors.TextSecondary,
+                            color = colors.textSecondary,
                             fontSize = 11.sp
                         )
                     }
@@ -175,15 +176,15 @@ fun CookiesSettingsDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(AppColors.BgElevated)
-                        .border(1.dp, AppColors.Border, RoundedCornerShape(10.dp))
+                        .background(colors.bgElevated)
+                        .border(1.dp, colors.border, RoundedCornerShape(10.dp))
                         .padding(horizontal = 10.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
                         text = "Používat cookies při přehrávání a stahování",
-                        color = if (status.hasFile) AppColors.TextPrimary else AppColors.TextSecondary,
+                        color = if (status.hasFile) colors.textPrimary else colors.textSecondary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium,
                         modifier = Modifier
@@ -195,10 +196,16 @@ fun CookiesSettingsDialog(
                         onCheckedChange = onToggleEnabled,
                         enabled = status.hasFile,
                         colors = SwitchDefaults.colors(
-                            checkedThumbColor = Color.White,
-                            checkedTrackColor = AppColors.SuccessGreen,
-                            uncheckedThumbColor = AppColors.TextSecondary,
-                            uncheckedTrackColor = AppColors.BgSurface
+                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                            checkedTrackColor = colors.successGreen,
+                            uncheckedThumbColor = colors.textSecondary,
+                            uncheckedTrackColor = colors.bgSurface,
+                            uncheckedBorderColor = colors.border,
+                            disabledCheckedThumbColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
+                            disabledCheckedTrackColor = colors.successGreen.copy(alpha = 0.4f),
+                            disabledUncheckedThumbColor = colors.textSecondary.copy(alpha = 0.5f),
+                            disabledUncheckedTrackColor = colors.bgSurface.copy(alpha = 0.6f),
+                            disabledUncheckedBorderColor = colors.border.copy(alpha = 0.5f)
                         )
                     )
                 }
@@ -212,9 +219,9 @@ fun CookiesSettingsDialog(
                         feedbackMessage.contains("prázdný", ignoreCase = true) ||
                         feedbackMessage.contains("velký", ignoreCase = true)
                     val accent = when {
-                        isError -> AppColors.AccentRed
-                        feedbackMessage.startsWith("✅") -> AppColors.SuccessGreen
-                        else -> AppColors.WarningAmber
+                        isError -> colors.accentRed
+                        feedbackMessage.startsWith("✅") -> colors.successGreen
+                        else -> colors.warningAmber
                     }
                     Box(
                         modifier = Modifier
@@ -226,7 +233,7 @@ fun CookiesSettingsDialog(
                     ) {
                         Text(
                             text = feedbackMessage,
-                            color = AppColors.TextPrimary,
+                            color = colors.textPrimary,
                             fontSize = 12.sp,
                             lineHeight = 16.sp
                         )
@@ -244,11 +251,14 @@ fun CookiesSettingsDialog(
                                 arrayOf("text/*", "application/octet-stream", "*/*")
                             )
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.primaryBlue,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        ),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("📂 Nahrát cookies.txt", color = Color.White, fontSize = 13.sp)
+                        Text("📂 Nahrát cookies.txt", fontSize = 13.sp)
                     }
 
                     if (status.hasFile) {
@@ -257,11 +267,11 @@ fun CookiesSettingsDialog(
                             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
                             border = BorderStroke(
                                 1.dp,
-                                AppColors.AccentRed.copy(alpha = 0.65f)
+                                colors.accentRed.copy(alpha = 0.65f)
                             ),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("🗑 Odstranit", color = AppColors.AccentRed, fontSize = 13.sp)
+                            Text("🗑 Odstranit", color = colors.accentRed, fontSize = 13.sp)
                         }
                     }
                 }
@@ -270,9 +280,13 @@ fun CookiesSettingsDialog(
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.BgElevated)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.bgElevated,
+                    contentColor = colors.textPrimary
+                ),
+                border = BorderStroke(1.dp, colors.border)
             ) {
-                Text("Zavřít", color = AppColors.TextPrimary)
+                Text("Zavřít")
             }
         }
     )

@@ -33,6 +33,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -47,7 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -63,13 +63,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.ffmpegplaydownloader.app.ui.theme.AppColors
+import com.ffmpegplaydownloader.app.ui.theme.AppColorPalette
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @Composable
 fun ReadmeDialog(onDismiss: () -> Unit) {
+    val colors = AppTheme.colors
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
@@ -117,8 +119,8 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                 .fillMaxWidth(0.95f)
                 .fillMaxHeight(0.88f),
             shape = RoundedCornerShape(16.dp),
-            color = AppColors.BgSurface,
-            border = BorderStroke(1.dp, AppColors.Border)
+            color = colors.bgSurface,
+            border = BorderStroke(1.dp, colors.border)
         ) {
             Column(
                 modifier = Modifier
@@ -135,7 +137,7 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "📖 README / Nápověda",
-                            color = AppColors.TextPrimary,
+                            color = colors.textPrimary,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold,
                             maxLines = 1,
@@ -143,7 +145,7 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                         )
                         Text(
                             text = "Dokumentace přibalená přímo v APK",
-                            color = AppColors.TextSecondary,
+                            color = colors.textSecondary,
                             fontSize = 11.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -156,7 +158,7 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Zavřít",
-                            tint = AppColors.TextSecondary
+                            tint = colors.textSecondary
                         )
                     }
                 }
@@ -170,7 +172,7 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                     placeholder = {
                         Text(
                             text = "Hledat v README...",
-                            color = AppColors.TextSecondary,
+                            color = colors.textSecondary,
                             fontSize = 13.sp
                         )
                     },
@@ -178,7 +180,7 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = null,
-                            tint = AppColors.TextSecondary,
+                            tint = colors.textSecondary,
                             modifier = Modifier.size(18.dp)
                         )
                     },
@@ -191,7 +193,7 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Vymazat hledání",
-                                    tint = AppColors.TextSecondary,
+                                    tint = colors.textSecondary,
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
@@ -199,13 +201,13 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                     },
                     shape = RoundedCornerShape(10.dp),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = AppColors.BgMain,
-                        unfocusedContainerColor = AppColors.BgMain,
-                        focusedBorderColor = AppColors.PrimaryBlue,
-                        unfocusedBorderColor = AppColors.Border,
-                        focusedTextColor = AppColors.TextPrimary,
-                        unfocusedTextColor = AppColors.TextPrimary,
-                        cursorColor = AppColors.PrimaryBlue
+                        focusedContainerColor = colors.bgMain,
+                        unfocusedContainerColor = colors.bgMain,
+                        focusedBorderColor = colors.primaryBlue,
+                        unfocusedBorderColor = colors.border,
+                        focusedTextColor = colors.textPrimary,
+                        unfocusedTextColor = colors.textPrimary,
+                        cursorColor = colors.primaryBlue
                     )
                 )
 
@@ -215,8 +217,8 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                         .weight(1f)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(AppColors.BgElevated)
-                        .border(1.dp, AppColors.Border, RoundedCornerShape(12.dp))
+                        .background(colors.bgElevated)
+                        .border(1.dp, colors.border, RoundedCornerShape(12.dp))
                 ) {
                     when {
                         loadError != null -> {
@@ -229,14 +231,14 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                             ) {
                                 Text(
                                     text = "Dokumentaci se nepodařilo načíst",
-                                    color = AppColors.TextPrimary,
+                                    color = colors.textPrimary,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Spacer(Modifier.height(6.dp))
                                 Text(
                                     text = loadError.orEmpty(),
-                                    color = AppColors.TextSecondary,
+                                    color = colors.textSecondary,
                                     fontSize = 12.sp
                                 )
                             }
@@ -248,7 +250,7 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                                 contentAlignment = Alignment.Center
                             ) {
                                 CircularProgressIndicator(
-                                    color = AppColors.PrimaryBlue,
+                                    color = colors.primaryBlue,
                                     modifier = Modifier.size(28.dp)
                                 )
                             }
@@ -267,7 +269,7 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                                     } else {
                                         "Nenalezeny žádné shody pro „${searchQuery.trim()}“."
                                     },
-                                    color = AppColors.TextSecondary,
+                                    color = colors.textSecondary,
                                     fontSize = 13.sp
                                 )
                             }
@@ -309,10 +311,10 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                         enabled = !rawMarkdown.isNullOrEmpty(),
                         border = BorderStroke(
                             1.dp,
-                            if (copiedFeedback) AppColors.PrimaryBlue else AppColors.Border
+                            if (copiedFeedback) colors.primaryBlue else colors.border
                         ),
                         colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = if (copiedFeedback) AppColors.PrimaryBlue else AppColors.TextPrimary
+                            contentColor = if (copiedFeedback) colors.primaryBlue else colors.textPrimary
                         ),
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
@@ -333,8 +335,8 @@ fun ReadmeDialog(onDismiss: () -> Unit) {
                     Button(
                         onClick = onDismiss,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = AppColors.PrimaryBlue,
-                            contentColor = Color.White
+                            containerColor = colors.primaryBlue,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
                         ),
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
@@ -616,6 +618,7 @@ private fun filterMarkdownBlocks(
 
 @Composable
 private fun MarkdownBlockView(block: MarkdownBlock) {
+    val colors = AppTheme.colors
     when (block) {
         is MarkdownBlock.Heading -> {
             val fontSize = when (block.level) {
@@ -625,8 +628,8 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
                 else -> 13.sp
             }
             val textColor = when (block.level) {
-                2 -> AppColors.PrimaryBlue
-                else -> AppColors.TextPrimary
+                2 -> colors.primaryBlue
+                else -> colors.textPrimary
             }
             Column(
                 modifier = Modifier
@@ -634,7 +637,7 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
                     .padding(top = if (block.level <= 2) 4.dp else 2.dp)
             ) {
                 Text(
-                    text = buildMarkdownInlineText(block.text),
+                    text = buildMarkdownInlineText(block.text, colors),
                     color = textColor,
                     fontSize = fontSize,
                     fontWeight = FontWeight.Bold,
@@ -643,7 +646,7 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
                 if (block.level <= 2) {
                     Spacer(Modifier.height(3.dp))
                     HorizontalDivider(
-                        color = if (block.level == 1) AppColors.PrimaryBlue.copy(alpha = 0.5f) else AppColors.Border,
+                        color = if (block.level == 1) colors.primaryBlue.copy(alpha = 0.5f) else colors.border,
                         thickness = 1.dp
                     )
                 }
@@ -652,8 +655,8 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
 
         is MarkdownBlock.Paragraph -> {
             Text(
-                text = buildMarkdownInlineText(block.text),
-                color = AppColors.TextSecondary,
+                text = buildMarkdownInlineText(block.text, colors),
+                color = colors.textSecondary,
                 fontSize = 12.5.sp,
                 lineHeight = 18.sp
             )
@@ -668,14 +671,14 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
             ) {
                 Text(
                     text = "•",
-                    color = AppColors.PrimaryBlue,
+                    color = colors.primaryBlue,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(end = 6.dp)
                 )
                 Text(
-                    text = buildMarkdownInlineText(block.text),
-                    color = AppColors.TextSecondary,
+                    text = buildMarkdownInlineText(block.text, colors),
+                    color = colors.textSecondary,
                     fontSize = 12.5.sp,
                     lineHeight = 18.sp,
                     modifier = Modifier.weight(1f)
@@ -692,14 +695,14 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
             ) {
                 Text(
                     text = "${block.number}.",
-                    color = AppColors.PrimaryBlue,
+                    color = colors.primaryBlue,
                     fontSize = 12.5.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(end = 6.dp)
                 )
                 Text(
-                    text = buildMarkdownInlineText(block.text),
-                    color = AppColors.TextSecondary,
+                    text = buildMarkdownInlineText(block.text, colors),
+                    color = colors.textSecondary,
                     fontSize = 12.5.sp,
                     lineHeight = 18.sp,
                     modifier = Modifier.weight(1f)
@@ -713,18 +716,18 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
                     .fillMaxWidth()
                     .height(IntrinsicSize.Min)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(AppColors.BgSurface)
-                    .border(1.dp, AppColors.Border, RoundedCornerShape(8.dp))
+                    .background(colors.bgSurface)
+                    .border(1.dp, colors.border, RoundedCornerShape(8.dp))
             ) {
                 Box(
                     modifier = Modifier
                         .width(3.dp)
                         .fillMaxHeight()
-                        .background(AppColors.PrimaryBlue)
+                        .background(colors.primaryBlue)
                 )
                 Text(
-                    text = buildMarkdownInlineText(block.text),
-                    color = AppColors.TextSecondary,
+                    text = buildMarkdownInlineText(block.text, colors),
+                    color = colors.textSecondary,
                     fontSize = 12.sp,
                     lineHeight = 17.sp,
                     modifier = Modifier
@@ -739,15 +742,15 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(AppColors.BgMain)
-                    .border(1.dp, AppColors.Border, RoundedCornerShape(8.dp))
+                    .background(colors.bgMain)
+                    .border(1.dp, colors.border, RoundedCornerShape(8.dp))
                     .padding(10.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 if (block.language.isNotEmpty()) {
                     Text(
                         text = block.language.uppercase(),
-                        color = AppColors.PrimaryBlue,
+                        color = colors.primaryBlue,
                         fontSize = 9.5.sp,
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = FontFamily.Monospace
@@ -760,7 +763,7 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
                 ) {
                     Text(
                         text = block.code,
-                        color = AppColors.TextPrimary,
+                        color = colors.textPrimary,
                         fontSize = 11.sp,
                         lineHeight = 16.sp,
                         fontFamily = FontFamily.Monospace
@@ -783,8 +786,8 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(AppColors.BgMain)
-                        .border(1.dp, AppColors.Border, RoundedCornerShape(8.dp))
+                        .background(colors.bgMain)
+                        .border(1.dp, colors.border, RoundedCornerShape(8.dp))
                         .horizontalScroll(rememberScrollState())
                 ) {
                     Column(modifier = Modifier.width(IntrinsicSize.Max)) {
@@ -792,12 +795,12 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(AppColors.BgSurface)
+                                    .background(colors.bgSurface)
                             ) {
                                 block.headers.forEachIndexed { colIdx, cell ->
                                     Text(
-                                        text = buildMarkdownInlineText(cell),
-                                        color = AppColors.TextPrimary,
+                                        text = buildMarkdownInlineText(cell, colors),
+                                        color = colors.textPrimary,
                                         fontSize = 11.5.sp,
                                         fontWeight = FontWeight.SemiBold,
                                         modifier = Modifier
@@ -806,14 +809,14 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
                                     )
                                 }
                             }
-                            HorizontalDivider(color = AppColors.Border, thickness = 1.dp)
+                            HorizontalDivider(color = colors.border, thickness = 1.dp)
                         }
                         block.rows.forEachIndexed { rowIdx, row ->
                             Row(modifier = Modifier.fillMaxWidth()) {
                                 row.forEachIndexed { colIdx, cell ->
                                     Text(
-                                        text = buildMarkdownInlineText(cell),
-                                        color = AppColors.TextSecondary,
+                                        text = buildMarkdownInlineText(cell, colors),
+                                        color = colors.textSecondary,
                                         fontSize = 11.5.sp,
                                         lineHeight = 16.sp,
                                         modifier = Modifier
@@ -824,7 +827,7 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
                             }
                             if (rowIdx < block.rows.lastIndex) {
                                 HorizontalDivider(
-                                    color = AppColors.Border.copy(alpha = 0.6f),
+                                    color = colors.border.copy(alpha = 0.6f),
                                     thickness = 0.5.dp
                                 )
                             }
@@ -836,7 +839,7 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
 
         MarkdownBlock.Divider -> {
             HorizontalDivider(
-                color = AppColors.Border,
+                color = colors.border,
                 thickness = 1.dp,
                 modifier = Modifier.padding(vertical = 2.dp)
             )
@@ -844,9 +847,10 @@ private fun MarkdownBlockView(block: MarkdownBlock) {
     }
 }
 
-private fun buildMarkdownInlineText(text: String): AnnotatedString = buildAnnotatedString {
+private fun buildMarkdownInlineText(text: String, colors: AppColorPalette): AnnotatedString = buildAnnotatedString {
     var i = 0
     val len = text.length
+    val inlineCodeBg = if (colors.isDark) colors.bgMain else colors.bgHover
     while (i < len) {
         // Inline code: `...`
         if (text[i] == '`') {
@@ -856,8 +860,8 @@ private fun buildMarkdownInlineText(text: String): AnnotatedString = buildAnnota
                 withStyle(
                     SpanStyle(
                         fontFamily = FontFamily.Monospace,
-                        color = AppColors.PrimaryBlue,
-                        background = AppColors.BgMain
+                        color = colors.primaryBlue,
+                        background = inlineCodeBg
                     )
                 ) {
                     append(codeContent)
@@ -875,10 +879,10 @@ private fun buildMarkdownInlineText(text: String): AnnotatedString = buildAnnota
                 withStyle(
                     SpanStyle(
                         fontWeight = FontWeight.Bold,
-                        color = AppColors.TextPrimary
+                        color = colors.textPrimary
                     )
                 ) {
-                    append(buildMarkdownInlineText(boldContent))
+                    append(buildMarkdownInlineText(boldContent, colors))
                 }
                 i = end + 2
                 continue
@@ -907,7 +911,7 @@ private fun buildMarkdownInlineText(text: String): AnnotatedString = buildAnnota
                     val label = text.substring(i + 1, closeBracket)
                     withStyle(
                         SpanStyle(
-                            color = AppColors.PrimaryBlue,
+                            color = colors.primaryBlue,
                             textDecoration = TextDecoration.Underline
                         )
                     ) {

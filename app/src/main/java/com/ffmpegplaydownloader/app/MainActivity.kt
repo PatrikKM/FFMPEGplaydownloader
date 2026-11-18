@@ -11,9 +11,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalView
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import com.ffmpegplaydownloader.app.player.PipHelper
 import com.ffmpegplaydownloader.app.ui.components.MainScreen
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 import com.ffmpegplaydownloader.app.ui.theme.FfmpegPlayDownloaderTheme
 import com.ffmpegplaydownloader.app.viewmodel.MainViewModel
 
@@ -48,7 +55,29 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            FfmpegPlayDownloaderTheme {
+            val darkTheme = isSystemInDarkTheme()
+            FfmpegPlayDownloaderTheme(darkTheme = darkTheme) {
+                val view = LocalView.current
+                val colors = AppTheme.colors
+                if (!view.isInEditMode) {
+                    SideEffect {
+                        val activityWindow = this@MainActivity.window
+                        @Suppress("DEPRECATION")
+                        activityWindow.statusBarColor = colors.bgMain.toArgb()
+                        @Suppress("DEPRECATION")
+                        activityWindow.navigationBarColor = if (!darkTheme && Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+                            Color(0xFF0F172A).toArgb()
+                        } else {
+                            colors.bgSurface.toArgb()
+                        }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                            activityWindow.isNavigationBarContrastEnforced = false
+                        }
+                        val insetsController = WindowCompat.getInsetsController(activityWindow, view)
+                        insetsController.isAppearanceLightStatusBars = !darkTheme
+                        insetsController.isAppearanceLightNavigationBars = !darkTheme
+                    }
+                }
                 MainScreen(viewModel = viewModel)
             }
         }

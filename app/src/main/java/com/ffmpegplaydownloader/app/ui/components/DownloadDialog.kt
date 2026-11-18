@@ -1,5 +1,6 @@
 package com.ffmpegplaydownloader.app.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -17,10 +17,13 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -30,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,7 +40,7 @@ import androidx.compose.ui.unit.sp
 import com.ffmpegplaydownloader.app.model.DownloadFormat
 import com.ffmpegplaydownloader.app.model.MediaItem
 import com.ffmpegplaydownloader.app.model.MediaPlatform
-import com.ffmpegplaydownloader.app.ui.theme.AppColors
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 
 @Composable
 fun DownloadDialog(
@@ -52,6 +54,7 @@ fun DownloadDialog(
         loudnorm: Boolean
     ) -> Unit
 ) {
+    val colors = AppTheme.colors
     val defaultFormat = if (item.platform == MediaPlatform.YOUTUBE_MUSIC) {
         DownloadFormat.MP3_320
     } else {
@@ -64,13 +67,32 @@ fun DownloadDialog(
     var embedSubs by remember { mutableStateOf(true) }
     var loudnorm by remember { mutableStateOf(false) }
 
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = colors.primaryBlue,
+        unfocusedBorderColor = colors.border,
+        focusedTextColor = colors.textPrimary,
+        unfocusedTextColor = colors.textPrimary,
+        focusedLabelColor = colors.primaryBlue,
+        unfocusedLabelColor = colors.textSecondary,
+        focusedPlaceholderColor = colors.textSecondary,
+        unfocusedPlaceholderColor = colors.textSecondary,
+        focusedContainerColor = colors.bgMain,
+        unfocusedContainerColor = colors.bgMain,
+        cursorColor = colors.primaryBlue
+    )
+    val checkboxColors = CheckboxDefaults.colors(
+        checkedColor = colors.primaryBlue,
+        checkmarkColor = MaterialTheme.colorScheme.onPrimary,
+        uncheckedColor = colors.textSecondary
+    )
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = AppColors.BgSurface,
+        containerColor = colors.bgSurface,
         title = {
             Text(
                 "⬇ Stáhnout a konvertovat přes FFmpeg",
-                color = AppColors.TextPrimary,
+                color = colors.textPrimary,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -89,29 +111,34 @@ fun DownloadDialog(
                 )
                 Text(
                     item.title,
-                    color = AppColors.TextSecondary,
+                    color = colors.textSecondary,
                     fontSize = 13.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Text("Výstupní formát a kvalita:", color = AppColors.TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text("Výstupní formát a kvalita:", color = colors.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Box {
                     OutlinedButton(
                         onClick = { formatMenuOpen = true },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp)
+                        shape = RoundedCornerShape(8.dp),
+                        border = BorderStroke(1.dp, colors.border),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = colors.bgElevated,
+                            contentColor = colors.textPrimary
+                        )
                     ) {
-                        Text(selectedFormat.label, color = AppColors.TextPrimary, fontSize = 12.sp)
+                        Text(selectedFormat.label, color = colors.textPrimary, fontSize = 12.sp)
                     }
                     DropdownMenu(
                         expanded = formatMenuOpen,
                         onDismissRequest = { formatMenuOpen = false },
-                        modifier = Modifier.background(AppColors.BgElevated)
+                        modifier = Modifier.background(colors.bgElevated)
                     ) {
                         DownloadFormat.entries.forEach { fmt ->
                             DropdownMenuItem(
-                                text = { Text(fmt.label, color = AppColors.TextPrimary, fontSize = 12.sp) },
+                                text = { Text(fmt.label, color = colors.textPrimary, fontSize = 12.sp) },
                                 onClick = {
                                     selectedFormat = fmt
                                     formatMenuOpen = false
@@ -131,6 +158,8 @@ fun DownloadDialog(
                         label = { Text("Výřez OD", fontSize = 11.sp) },
                         placeholder = { Text("0:30", fontSize = 11.sp) },
                         singleLine = true,
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.weight(1f)
                     )
                     OutlinedTextField(
@@ -139,6 +168,8 @@ fun DownloadDialog(
                         label = { Text("Výřez DO", fontSize = 11.sp) },
                         placeholder = { Text("2:45", fontSize = 11.sp) },
                         singleLine = true,
+                        colors = textFieldColors,
+                        shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -148,11 +179,15 @@ fun DownloadDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Checkbox(checked = embedSubs, onCheckedChange = { embedSubs = it })
+                        Checkbox(
+                            checked = embedSubs,
+                            onCheckedChange = { embedSubs = it },
+                            colors = checkboxColors
+                        )
                         Spacer(Modifier.width(4.dp))
                         Text(
                             "💬 Vložit české titulky (jsou-li dostupné)",
-                            color = AppColors.TextPrimary,
+                            color = colors.textPrimary,
                             fontSize = 12.sp
                         )
                     }
@@ -162,11 +197,15 @@ fun DownloadDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Checkbox(checked = loudnorm, onCheckedChange = { loudnorm = it })
+                    Checkbox(
+                        checked = loudnorm,
+                        onCheckedChange = { loudnorm = it },
+                        colors = checkboxColors
+                    )
                     Spacer(Modifier.width(4.dp))
                     Text(
                         "🔊 FFmpeg normalizace hlasitosti (Loudnorm)",
-                        color = AppColors.TextPrimary,
+                        color = colors.textPrimary,
                         fontSize = 12.sp
                     )
                 }
@@ -175,14 +214,17 @@ fun DownloadDialog(
         confirmButton = {
             Button(
                 onClick = { onStartDownload(selectedFormat, trimStart, trimEnd, embedSubs, loudnorm) },
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.primaryBlue,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
-                Text("🚀 Spustit FFmpeg", color = Color.White)
+                Text("🚀 Spustit FFmpeg")
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Zrušit", color = AppColors.TextSecondary)
+                Text("Zrušit", color = colors.textSecondary)
             }
         }
     )

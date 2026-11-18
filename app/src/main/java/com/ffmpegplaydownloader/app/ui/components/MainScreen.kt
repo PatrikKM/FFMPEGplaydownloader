@@ -15,6 +15,7 @@ import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -124,7 +125,7 @@ import com.ffmpegplaydownloader.app.model.ResultPlatformFilter
 import com.ffmpegplaydownloader.app.model.SearchSourceFilter
 import com.ffmpegplaydownloader.app.model.StreamMode
 import com.ffmpegplaydownloader.app.player.PipHelper
-import com.ffmpegplaydownloader.app.ui.theme.AppColors
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 import com.ffmpegplaydownloader.app.viewmodel.MainUiState
 import com.ffmpegplaydownloader.app.viewmodel.MainViewModel
 import com.ffmpegplaydownloader.app.voice.VoiceSearchController
@@ -138,6 +139,7 @@ private const val BUY_ME_A_COFFEE_URL = "https://buymeacoffee.com/patrikmohler"
 @Composable
 fun MainScreen(viewModel: MainViewModel) {
     val state by viewModel.uiState.collectAsState()
+    val colors = AppTheme.colors
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
@@ -257,7 +259,7 @@ fun MainScreen(viewModel: MainViewModel) {
             )
         } else {
             Scaffold(
-                containerColor = AppColors.BgMain,
+                containerColor = colors.bgMain,
                 bottomBar = {
                     BottomNavigationBar(
                         state = state,
@@ -270,7 +272,7 @@ fun MainScreen(viewModel: MainViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(AppColors.BgMain)
+                .background(colors.bgMain)
         ) {
             if (!state.isFullscreen) {
                 TopStudioHeader(
@@ -306,14 +308,14 @@ fun MainScreen(viewModel: MainViewModel) {
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(AppColors.PrimaryBlue.copy(alpha = 0.16f))
+                                .background(colors.primaryBlue.copy(alpha = if (colors.isDark) 0.16f else 0.12f))
                                 .padding(horizontal = 12.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text(
                                 banner,
-                                color = AppColors.TextPrimary,
+                                color = colors.textPrimary,
                                 fontSize = 12.sp,
                                 modifier = Modifier.weight(1f)
                             )
@@ -324,7 +326,7 @@ fun MainScreen(viewModel: MainViewModel) {
                                 Icon(
                                     Icons.Default.Close,
                                     contentDescription = "Zavřít",
-                                    tint = AppColors.TextSecondary,
+                                    tint = colors.textSecondary,
                                     modifier = Modifier.size(16.dp)
                                 )
                             }
@@ -347,7 +349,7 @@ fun MainScreen(viewModel: MainViewModel) {
                             Text(
                                 "Přirozený dotaz nebo URL...",
                                 fontSize = 12.sp,
-                                color = AppColors.TextSecondary,
+                                color = colors.textSecondary,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
@@ -361,7 +363,7 @@ fun MainScreen(viewModel: MainViewModel) {
                                     Icon(
                                         Icons.Default.Close,
                                         contentDescription = "Vymazat hledání",
-                                        tint = AppColors.TextSecondary,
+                                        tint = colors.textSecondary,
                                         modifier = Modifier.size(16.dp)
                                     )
                                 }
@@ -376,12 +378,13 @@ fun MainScreen(viewModel: MainViewModel) {
                             }
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = AppColors.PrimaryBlue,
-                            unfocusedBorderColor = AppColors.Border,
-                            focusedTextColor = AppColors.TextPrimary,
-                            unfocusedTextColor = AppColors.TextPrimary,
-                            focusedContainerColor = AppColors.BgSurface,
-                            unfocusedContainerColor = AppColors.BgSurface
+                            focusedBorderColor = colors.primaryBlue,
+                            unfocusedBorderColor = colors.border,
+                            focusedTextColor = colors.textPrimary,
+                            unfocusedTextColor = colors.textPrimary,
+                            focusedContainerColor = colors.bgSurface,
+                            unfocusedContainerColor = colors.bgSurface,
+                            cursorColor = colors.primaryBlue
                         ),
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.weight(1f)
@@ -391,15 +394,15 @@ fun MainScreen(viewModel: MainViewModel) {
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(0.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = if (state.isVoiceListening) AppColors.AccentRed else AppColors.BgElevated,
-                            contentColor = if (state.isVoiceListening) Color.White else AppColors.TextPrimary
+                            containerColor = if (state.isVoiceListening) colors.accentRed else colors.bgElevated,
+                            contentColor = if (state.isVoiceListening) Color.White else colors.textPrimary
                         ),
                         modifier = Modifier
                             .width(48.dp)
                             .height(54.dp)
                             .border(
                                 1.dp,
-                                if (state.isVoiceListening) AppColors.AccentRed else AppColors.Border,
+                                if (state.isVoiceListening) colors.accentRed else colors.border,
                                 RoundedCornerShape(10.dp)
                             )
                     ) {
@@ -416,7 +419,10 @@ fun MainScreen(viewModel: MainViewModel) {
                         enabled = !state.isSearching,
                         shape = RoundedCornerShape(10.dp),
                         contentPadding = PaddingValues(0.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.primaryBlue,
+                            contentColor = Color.White
+                        ),
                         modifier = Modifier
                             .width(52.dp)
                             .height(54.dp)
@@ -433,8 +439,8 @@ fun MainScreen(viewModel: MainViewModel) {
                                 .padding(horizontal = 12.dp)
                                 .padding(bottom = 6.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(AppColors.AccentRed.copy(alpha = 0.16f))
-                                .border(1.dp, AppColors.AccentRed.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
+                                .background(colors.accentRed.copy(alpha = if (colors.isDark) 0.16f else 0.10f))
+                                .border(1.dp, colors.accentRed.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
                                 .padding(horizontal = 10.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -442,12 +448,12 @@ fun MainScreen(viewModel: MainViewModel) {
                             Icon(
                                 Icons.Default.MicOff,
                                 contentDescription = null,
-                                tint = AppColors.AccentRed,
+                                tint = colors.accentRed,
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
                                 text = errMsg,
-                                color = AppColors.TextPrimary,
+                                color = colors.textPrimary,
                                 fontSize = 12.sp,
                                 modifier = Modifier.weight(1f)
                             )
@@ -458,7 +464,7 @@ fun MainScreen(viewModel: MainViewModel) {
                                 Icon(
                                     Icons.Default.Close,
                                     contentDescription = "Zavřít chybu hlasu",
-                                    tint = AppColors.TextSecondary,
+                                    tint = colors.textSecondary,
                                     modifier = Modifier.size(15.dp)
                                 )
                             }
@@ -600,7 +606,10 @@ fun MainScreen(viewModel: MainViewModel) {
                                         Button(
                                             onClick = { viewModel.search(queryOverride = state.lastSearchQuery, append = true) },
                                             enabled = !state.isLoadingMore,
-                                            colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = colors.primaryBlue,
+                                                contentColor = Color.White
+                                            ),
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(vertical = 4.dp)
@@ -626,6 +635,10 @@ fun MainScreen(viewModel: MainViewModel) {
                                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                         FilledTonalButton(
                                             onClick = viewModel::playNextInQueue,
+                                            colors = ButtonDefaults.filledTonalButtonColors(
+                                                containerColor = colors.bgElevated,
+                                                contentColor = colors.textPrimary
+                                            ),
                                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                                         ) {
                                             Icon(Icons.Default.SkipNext, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -634,9 +647,10 @@ fun MainScreen(viewModel: MainViewModel) {
                                         }
                                         OutlinedButton(
                                             onClick = viewModel::clearQueue,
+                                            border = BorderStroke(1.dp, colors.border),
                                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                                         ) {
-                                            Text("🗑 Vyčistit", fontSize = 12.sp, color = AppColors.TextSecondary)
+                                            Text("🗑 Vyčistit", fontSize = 12.sp, color = colors.textSecondary)
                                         }
                                     }
                                 }
@@ -673,16 +687,20 @@ fun MainScreen(viewModel: MainViewModel) {
                                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                         Button(
                                             onClick = viewModel::playAllFavorites,
-                                            colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = colors.primaryBlue,
+                                                contentColor = Color.White
+                                            ),
                                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                                         ) {
                                             Text("▶ Přehrát vše", fontSize = 12.sp, color = Color.White)
                                         }
                                         OutlinedButton(
                                             onClick = viewModel::clearFavorites,
+                                            border = BorderStroke(1.dp, colors.border),
                                             contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                                         ) {
-                                            Text("🗑", fontSize = 12.sp, color = AppColors.TextSecondary)
+                                            Text("🗑", fontSize = 12.sp, color = colors.textSecondary)
                                         }
                                     }
                                 }
@@ -718,9 +736,10 @@ fun MainScreen(viewModel: MainViewModel) {
                                     SectionHeader("Historie přehrávání", "${state.history.size}")
                                     OutlinedButton(
                                         onClick = viewModel::clearHistory,
+                                        border = BorderStroke(1.dp, colors.border),
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                                     ) {
-                                        Text("🗑 Smazat historii", fontSize = 12.sp, color = AppColors.TextSecondary)
+                                        Text("🗑 Smazat historii", fontSize = 12.sp, color = colors.textSecondary)
                                     }
                                 }
                             }
@@ -798,11 +817,17 @@ fun MainScreen(viewModel: MainViewModel) {
                                     SectionHeader("Stažené soubory", "${state.libraryFiles.size}")
                                     OutlinedButton(
                                         onClick = viewModel::refreshLibrary,
+                                        border = BorderStroke(1.dp, colors.border),
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
                                     ) {
-                                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp))
+                                        Icon(
+                                            Icons.Default.Refresh,
+                                            contentDescription = null,
+                                            tint = colors.textPrimary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
                                         Spacer(Modifier.width(4.dp))
-                                        Text("Obnovit", fontSize = 12.sp, color = AppColors.TextPrimary)
+                                        Text("Obnovit", fontSize = 12.sp, color = colors.textPrimary)
                                     }
                                 }
                             }
@@ -955,14 +980,14 @@ fun MainScreen(viewModel: MainViewModel) {
 
             AlertDialog(
                 onDismissRequest = viewModel::dismissExitDialog,
-                containerColor = AppColors.BgSurface,
-                titleContentColor = AppColors.TextPrimary,
-                textContentColor = AppColors.TextSecondary,
+                containerColor = colors.bgSurface,
+                titleContentColor = colors.textPrimary,
+                textContentColor = colors.textSecondary,
                 icon = {
                     Icon(
                         imageVector = Icons.Default.PowerSettingsNew,
                         contentDescription = null,
-                        tint = AppColors.AccentRed
+                        tint = colors.accentRed
                     )
                 },
                 title = {
@@ -977,14 +1002,14 @@ fun MainScreen(viewModel: MainViewModel) {
                         Text(
                             text = "Zastaví přehrávání, ukončí službu na pozadí a uloží aktuální pozici.",
                             fontSize = 13.sp,
-                            color = AppColors.TextSecondary
+                            color = colors.textSecondary
                         )
                         if (activeTasksSummary.isNotEmpty()) {
                             Text(
                                 text = "⚠️ Aktivní úlohy budou zrušeny ($activeTasksSummary).",
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = AppColors.WarningAmber
+                                color = colors.warningAmber
                             )
                         }
                     }
@@ -993,7 +1018,7 @@ fun MainScreen(viewModel: MainViewModel) {
                     Button(
                         onClick = viewModel::confirmExitApp,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = AppColors.AccentRed,
+                            containerColor = colors.accentRed,
                             contentColor = Color.White
                         )
                     ) {
@@ -1002,7 +1027,7 @@ fun MainScreen(viewModel: MainViewModel) {
                 },
                 dismissButton = {
                     TextButton(onClick = viewModel::dismissExitDialog) {
-                        Text("Zrušit", fontSize = 12.sp, color = AppColors.TextPrimary)
+                        Text("Zrušit", fontSize = 12.sp, color = colors.textPrimary)
                     }
                 }
             )
@@ -1023,11 +1048,12 @@ private fun TopStudioHeader(
     onBuyMeACoffeeClick: () -> Unit,
     onExitClick: () -> Unit
 ) {
+    val colors = AppTheme.colors
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(AppColors.BgSurface)
-            .border(1.dp, AppColors.Border)
+            .background(colors.bgSurface)
+            .border(1.dp, colors.border)
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Row(
@@ -1047,7 +1073,7 @@ private fun TopStudioHeader(
                         .clip(RoundedCornerShape(9.dp))
                         .background(
                             Brush.linearGradient(
-                                listOf(AppColors.AccentRed, AppColors.AccentOrange)
+                                listOf(colors.accentRed, colors.accentOrange)
                             )
                         ),
                     contentAlignment = Alignment.Center
@@ -1058,7 +1084,7 @@ private fun TopStudioHeader(
                 Column {
                     Text(
                         "FFMPEGplaydownloader",
-                        color = AppColors.TextPrimary,
+                        color = colors.textPrimary,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp,
                         maxLines = 1,
@@ -1066,7 +1092,7 @@ private fun TopStudioHeader(
                     )
                     Text(
                         "Přehrávač & vyhledávač s FFmpeg a yt-dlp",
-                        color = AppColors.TextSecondary,
+                        color = colors.textSecondary,
                         fontSize = 10.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -1084,8 +1110,8 @@ private fun TopStudioHeader(
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                     modifier = Modifier.height(32.dp),
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = AppColors.BgElevated,
-                        contentColor = AppColors.TextPrimary
+                        containerColor = colors.bgElevated,
+                        contentColor = colors.textPrimary
                     )
                 ) {
                     Text(
@@ -1102,13 +1128,13 @@ private fun TopStudioHeader(
                         .height(32.dp)
                         .border(
                             1.dp,
-                            AppColors.AccentRed.copy(alpha = 0.45f),
+                            colors.accentRed.copy(alpha = 0.45f),
                             RoundedCornerShape(50)
                         ),
                     shape = RoundedCornerShape(50),
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = AppColors.AccentRed.copy(alpha = 0.14f),
-                        contentColor = AppColors.AccentRed
+                        containerColor = colors.accentRed.copy(alpha = if (colors.isDark) 0.14f else 0.10f),
+                        contentColor = colors.accentRed
                     )
                 ) {
                     Icon(
@@ -1130,9 +1156,9 @@ private fun TopStudioHeader(
         Spacer(Modifier.height(6.dp))
 
         val cookiesDotColor = when {
-            cookiesStatus.hasFile && cookiesStatus.enabled -> AppColors.SuccessGreen
-            cookiesStatus.hasFile && !cookiesStatus.enabled -> AppColors.WarningAmber
-            else -> AppColors.TextSecondary
+            cookiesStatus.hasFile && cookiesStatus.enabled -> colors.successGreen
+            cookiesStatus.hasFile && !cookiesStatus.enabled -> colors.warningAmber
+            else -> colors.textSecondary
         }
         val cookiesLabel = when {
             cookiesStatus.hasFile && cookiesStatus.enabled -> "🍪 Cookies: Aktivní"
@@ -1140,14 +1166,14 @@ private fun TopStudioHeader(
             else -> "🍪 Cookies"
         }
         val cookiesBorderColor = when {
-            cookiesStatus.hasFile && cookiesStatus.enabled -> AppColors.SuccessGreen.copy(alpha = 0.55f)
-            cookiesStatus.hasFile && !cookiesStatus.enabled -> AppColors.WarningAmber.copy(alpha = 0.55f)
-            else -> AppColors.Border
+            cookiesStatus.hasFile && cookiesStatus.enabled -> colors.successGreen.copy(alpha = 0.55f)
+            cookiesStatus.hasFile && !cookiesStatus.enabled -> colors.warningAmber.copy(alpha = 0.55f)
+            else -> colors.border
         }
         val cookiesLabelColor = when {
-            cookiesStatus.hasFile && cookiesStatus.enabled -> AppColors.SuccessGreen
-            cookiesStatus.hasFile && !cookiesStatus.enabled -> AppColors.WarningAmber
-            else -> AppColors.TextPrimary
+            cookiesStatus.hasFile && cookiesStatus.enabled -> colors.successGreen
+            cookiesStatus.hasFile && !cookiesStatus.enabled -> colors.warningAmber
+            else -> colors.textPrimary
         }
 
         FlowRow(
@@ -1155,11 +1181,11 @@ private fun TopStudioHeader(
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             StatusPill(
-                dotColor = AppColors.SuccessGreen,
+                dotColor = colors.successGreen,
                 label = "FFmpeg: $ffmpegVersion"
             )
             StatusPill(
-                dotColor = if (isUpdating) AppColors.WarningAmber else AppColors.SuccessGreen,
+                dotColor = if (isUpdating) colors.warningAmber else colors.successGreen,
                 label = "yt-dlp: $ytdlpVersion"
             )
             StatusPill(
@@ -1170,10 +1196,10 @@ private fun TopStudioHeader(
                 onClick = onCookiesClick
             )
             StatusPill(
-                dotColor = AppColors.PrimaryBlue,
+                dotColor = colors.primaryBlue,
                 label = "📖 README",
-                borderColor = AppColors.PrimaryBlue.copy(alpha = 0.55f),
-                labelColor = AppColors.TextPrimary,
+                borderColor = colors.primaryBlue.copy(alpha = 0.55f),
+                labelColor = colors.textPrimary,
                 onClick = onReadmeClick
             )
             BuyMeACoffeePill(onClick = onBuyMeACoffeeClick)
@@ -1185,32 +1211,38 @@ private fun TopStudioHeader(
 private fun BuyMeACoffeePill(
     onClick: () -> Unit
 ) {
+    val colors = AppTheme.colors
+    val coffeeContentColor = if (colors.isDark) colors.goldStar else Color(0xFF92400E)
+    val coffeeGradient = if (colors.isDark) {
+        listOf(
+            Color(0xFF3A2A10),
+            colors.goldStar.copy(alpha = 0.16f)
+        )
+    } else {
+        listOf(
+            Color(0xFFFEF3C7),
+            colors.goldStar.copy(alpha = 0.14f)
+        )
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .clip(RoundedCornerShape(50))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(
-                        Color(0xFF3A2A10),
-                        AppColors.GoldStar.copy(alpha = 0.16f)
-                    )
-                )
-            )
-            .border(1.dp, AppColors.GoldStar.copy(alpha = 0.6f), RoundedCornerShape(50))
+            .background(Brush.horizontalGradient(coffeeGradient))
+            .border(1.dp, colors.goldStar.copy(alpha = 0.6f), RoundedCornerShape(50))
             .clickable(onClick = onClick)
             .padding(horizontal = 9.dp, vertical = 3.dp)
     ) {
         Icon(
             imageVector = Icons.Default.LocalCafe,
             contentDescription = "Buy Me a Coffee",
-            tint = AppColors.GoldStar,
+            tint = coffeeContentColor,
             modifier = Modifier.size(12.dp)
         )
         Spacer(Modifier.width(4.dp))
         Text(
             text = "☕ Buy Me a Coffee",
-            color = AppColors.GoldStar,
+            color = coffeeContentColor,
             fontSize = 10.sp,
             fontWeight = FontWeight.SemiBold,
             maxLines = 1
@@ -1222,14 +1254,17 @@ private fun BuyMeACoffeePill(
 private fun StatusPill(
     dotColor: Color,
     label: String,
-    borderColor: Color = AppColors.Border,
-    labelColor: Color = AppColors.TextSecondary,
+    borderColor: Color? = null,
+    labelColor: Color? = null,
     onClick: (() -> Unit)? = null
 ) {
+    val colors = AppTheme.colors
+    val resolvedBorder = borderColor ?: colors.border
+    val resolvedLabel = labelColor ?: colors.textSecondary
     val baseModifier = Modifier
         .clip(RoundedCornerShape(50))
-        .background(AppColors.BgElevated)
-        .border(1.dp, borderColor, RoundedCornerShape(50))
+        .background(colors.bgElevated)
+        .border(1.dp, resolvedBorder, RoundedCornerShape(50))
     val pillModifier = if (onClick != null) {
         baseModifier.clickable(onClick = onClick)
     } else {
@@ -1246,7 +1281,7 @@ private fun StatusPill(
                 .background(dotColor)
         )
         Spacer(Modifier.width(5.dp))
-        Text(label, color = labelColor, fontSize = 10.sp)
+        Text(label, color = resolvedLabel, fontSize = 10.sp)
     }
 }
 
@@ -1256,9 +1291,10 @@ private fun BottomNavigationBar(
     activeDownloadCount: Int,
     onSelectTab: (MainTab) -> Unit
 ) {
+    val colors = AppTheme.colors
     NavigationBar(
-        containerColor = AppColors.BgSurface,
-        contentColor = AppColors.TextPrimary
+        containerColor = colors.bgSurface,
+        contentColor = colors.textPrimary
     ) {
         MainTab.entries.forEach { tab ->
             val icon = when (tab) {
@@ -1293,11 +1329,11 @@ private fun BottomNavigationBar(
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
-                    selectedIconColor = AppColors.PrimaryBlue,
-                    selectedTextColor = AppColors.PrimaryBlue,
-                    unselectedIconColor = AppColors.TextSecondary,
-                    unselectedTextColor = AppColors.TextSecondary,
-                    indicatorColor = AppColors.PrimaryBlue.copy(alpha = 0.14f)
+                    selectedIconColor = colors.primaryBlue,
+                    selectedTextColor = colors.primaryBlue,
+                    unselectedIconColor = colors.textSecondary,
+                    unselectedTextColor = colors.textSecondary,
+                    indicatorColor = colors.primaryBlue.copy(alpha = if (colors.isDark) 0.14f else 0.12f)
                 )
             )
         }
@@ -1316,11 +1352,12 @@ private fun MediaSearchCard(
     onShare: () -> Unit,
     onDownload: () -> Unit
 ) {
+    val colors = AppTheme.colors
     val isYtMusic = item.platform == MediaPlatform.YOUTUBE_MUSIC
     val accentBorder = if (isYtMusic) {
-        AppColors.YouTubeMusicPink.copy(alpha = 0.55f)
+        colors.youTubeMusicPink.copy(alpha = 0.55f)
     } else {
-        AppColors.Border
+        colors.border
     }
     val defaultTapAction = if (isYtMusic && !item.contentKind.equals("Video", ignoreCase = true)) {
         onPlayAudio
@@ -1332,14 +1369,14 @@ private fun MediaSearchCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(AppColors.BgElevated)
+            .background(colors.bgElevated)
             .border(1.dp, accentBorder, RoundedCornerShape(10.dp))
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .background(Color(0xFF080B11))
+                .background(if (colors.isDark) Color(0xFF080B11) else Color(0xFF1E293B))
                 .clickable(onClick = defaultTapAction)
         ) {
             if (item.thumbnail.isNotBlank()) {
@@ -1371,7 +1408,7 @@ private fun MediaSearchCard(
                 Icon(
                     imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
                     contentDescription = "Oblíbené",
-                    tint = if (isFavorite) AppColors.GoldStar else Color.White,
+                    tint = if (isFavorite) Color(0xFFFBBF24) else Color.White,
                     modifier = Modifier.size(18.dp)
                 )
             }
@@ -1392,7 +1429,7 @@ private fun MediaSearchCard(
         Column(modifier = Modifier.padding(10.dp)) {
             Text(
                 item.title,
-                color = AppColors.TextPrimary,
+                color = colors.textPrimary,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 maxLines = 2,
@@ -1404,7 +1441,7 @@ private fun MediaSearchCard(
                 item.channel.takeIf { it.isNotBlank() },
                 viewsStr.takeIf { it.isNotBlank() }
             ).joinToString(" • ")
-            Text(meta, color = AppColors.TextSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(meta, color = colors.textSecondary, fontSize = 12.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
 
             Spacer(Modifier.height(8.dp))
 
@@ -1416,7 +1453,10 @@ private fun MediaSearchCard(
                 if (isYtMusic) {
                     Button(
                         onClick = onPlayAudio,
-                        colors = ButtonDefaults.buttonColors(containerColor = AppColors.YouTubeMusicPink),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.youTubeMusicPink,
+                            contentColor = Color.White
+                        ),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         modifier = Modifier.height(32.dp)
                     ) {
@@ -1428,8 +1468,8 @@ private fun MediaSearchCard(
                         onClick = onPlayVideo,
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = AppColors.BgSurface,
-                            contentColor = AppColors.TextPrimary
+                            containerColor = colors.bgSurface,
+                            contentColor = colors.textPrimary
                         ),
                         modifier = Modifier.height(32.dp)
                     ) {
@@ -1440,7 +1480,10 @@ private fun MediaSearchCard(
                 } else {
                     Button(
                         onClick = onPlayVideo,
-                        colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.primaryBlue,
+                            contentColor = Color.White
+                        ),
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         modifier = Modifier.height(32.dp)
                     ) {
@@ -1452,8 +1495,8 @@ private fun MediaSearchCard(
                         onClick = onPlayAudio,
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = AppColors.BgSurface,
-                            contentColor = AppColors.TextPrimary
+                            containerColor = colors.bgSurface,
+                            contentColor = colors.textPrimary
                         ),
                         modifier = Modifier.height(32.dp)
                     ) {
@@ -1466,8 +1509,8 @@ private fun MediaSearchCard(
                     onClick = onAddQueue,
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = AppColors.BgSurface,
-                        contentColor = AppColors.TextPrimary
+                        containerColor = colors.bgSurface,
+                        contentColor = colors.textPrimary
                     ),
                     modifier = Modifier.height(32.dp)
                 ) {
@@ -1477,8 +1520,8 @@ private fun MediaSearchCard(
                     onClick = onShare,
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = AppColors.BgSurface,
-                        contentColor = AppColors.TextPrimary
+                        containerColor = colors.bgSurface,
+                        contentColor = colors.textPrimary
                     ),
                     modifier = Modifier.height(32.dp)
                 ) {
@@ -1488,7 +1531,10 @@ private fun MediaSearchCard(
                 }
                 Button(
                     onClick = onDownload,
-                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.AccentRed),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.accentRed,
+                        contentColor = Color.White
+                    ),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                     modifier = Modifier.height(32.dp)
                 ) {
@@ -1516,12 +1562,16 @@ private fun SideListMediaCard(
     onDownload: (() -> Unit)?,
     onRemove: () -> Unit
 ) {
+    val colors = AppTheme.colors
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(if (isPlaying) AppColors.PrimaryBlue.copy(alpha = 0.14f) else AppColors.BgElevated)
-            .border(1.dp, if (isPlaying) AppColors.PrimaryBlue else AppColors.Border, RoundedCornerShape(10.dp))
+            .background(
+                if (isPlaying) colors.primaryBlue.copy(alpha = if (colors.isDark) 0.14f else 0.10f)
+                else colors.bgElevated
+            )
+            .border(1.dp, if (isPlaying) colors.primaryBlue else colors.border, RoundedCornerShape(10.dp))
             .padding(10.dp)
     ) {
         Row(
@@ -1537,12 +1587,12 @@ private fun SideListMediaCard(
                 contentKind = item.contentKind
             )
             IconButton(onClick = onRemove, modifier = Modifier.size(24.dp)) {
-                Icon(Icons.Default.Close, contentDescription = "Odebrat", tint = AppColors.TextSecondary, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Close, contentDescription = "Odebrat", tint = colors.textSecondary, modifier = Modifier.size(16.dp))
             }
         }
         Text(
             text = (if (isPlaying) "▶ " else "") + item.title,
-            color = AppColors.TextPrimary,
+            color = colors.textPrimary,
             fontWeight = FontWeight.SemiBold,
             fontSize = 13.sp,
             maxLines = 2,
@@ -1557,7 +1607,7 @@ private fun SideListMediaCard(
 
         if (sub.isNotBlank()) {
             Spacer(Modifier.height(2.dp))
-            Text(sub, color = AppColors.TextSecondary, fontSize = 11.sp)
+            Text(sub, color = colors.textSecondary, fontSize = 11.sp)
         }
 
         Spacer(Modifier.height(8.dp))
@@ -1568,7 +1618,10 @@ private fun SideListMediaCard(
         ) {
             Button(
                 onClick = onPlayVideo,
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.primaryBlue,
+                    contentColor = Color.White
+                ),
                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                 modifier = Modifier.height(30.dp)
             ) {
@@ -1577,53 +1630,62 @@ private fun SideListMediaCard(
             if (onPlayAudio != null) {
                 OutlinedButton(
                     onClick = onPlayAudio,
+                    border = BorderStroke(1.dp, colors.border),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                     modifier = Modifier.height(30.dp)
                 ) {
-                    Text("🎵 Zvuk", fontSize = 11.sp, color = AppColors.TextPrimary)
+                    Text("🎵 Zvuk", fontSize = 11.sp, color = colors.textPrimary)
                 }
             }
             if (onAddQueue != null) {
                 OutlinedButton(
                     onClick = onAddQueue,
+                    border = BorderStroke(1.dp, colors.border),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                     modifier = Modifier.height(30.dp)
                 ) {
-                    Text("➕ Fronta", fontSize = 11.sp, color = AppColors.TextPrimary)
+                    Text("➕ Fronta", fontSize = 11.sp, color = colors.textPrimary)
                 }
             }
             if (onToggleFav != null) {
                 OutlinedButton(
                     onClick = onToggleFav,
+                    border = BorderStroke(1.dp, colors.border),
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                     modifier = Modifier.height(30.dp)
                 ) {
-                    Text(if (isFavorite) "⭐" else "☆", fontSize = 12.sp)
+                    Text(
+                        if (isFavorite) "⭐" else "☆",
+                        fontSize = 12.sp,
+                        color = if (isFavorite) colors.goldStar else colors.textPrimary
+                    )
                 }
             }
             if (onShare != null) {
                 OutlinedButton(
                     onClick = onShare,
+                    border = BorderStroke(1.dp, colors.border),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                     modifier = Modifier.height(30.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Share,
                         contentDescription = null,
-                        tint = AppColors.TextPrimary,
+                        tint = colors.textPrimary,
                         modifier = Modifier.size(13.dp)
                     )
                     Spacer(Modifier.width(4.dp))
-                    Text("Sdílet", fontSize = 11.sp, color = AppColors.TextPrimary)
+                    Text("Sdílet", fontSize = 11.sp, color = colors.textPrimary)
                 }
             }
             if (onDownload != null) {
                 OutlinedButton(
                     onClick = onDownload,
+                    border = BorderStroke(1.dp, colors.border),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                     modifier = Modifier.height(30.dp)
                 ) {
-                    Text("⬇ Stáhnout", fontSize = 11.sp, color = AppColors.TextPrimary)
+                    Text("⬇ Stáhnout", fontSize = 11.sp, color = colors.textPrimary)
                 }
             }
         }
@@ -1636,12 +1698,13 @@ private fun DownloadJobCard(
     onPlay: () -> Unit,
     onCancelOrRemove: () -> Unit
 ) {
+    val colors = AppTheme.colors
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(AppColors.BgElevated)
-            .border(1.dp, AppColors.Border, RoundedCornerShape(10.dp))
+            .background(colors.bgElevated)
+            .border(1.dp, colors.border, RoundedCornerShape(10.dp))
             .padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -1652,7 +1715,7 @@ private fun DownloadJobCard(
         ) {
             Text(
                 job.title,
-                color = AppColors.TextPrimary,
+                color = colors.textPrimary,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp,
                 maxLines = 2,
@@ -1660,20 +1723,20 @@ private fun DownloadJobCard(
                 modifier = Modifier.weight(1f)
             )
             IconButton(onClick = onCancelOrRemove, modifier = Modifier.size(24.dp)) {
-                Icon(Icons.Default.Close, contentDescription = "Zrušit/Smazat", tint = AppColors.TextSecondary, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Close, contentDescription = "Zrušit/Smazat", tint = colors.textSecondary, modifier = Modifier.size(16.dp))
             }
         }
 
         Text(
             "Formát: ${job.format.id.uppercase()}${if (job.loudnorm) " • Loudnorm" else ""}",
-            color = AppColors.TextSecondary,
+            color = colors.textSecondary,
             fontSize = 11.sp
         )
 
         LinearProgressIndicator(
             progress = { (job.progress / 100f).coerceIn(0f, 1f) },
-            color = if (job.status == DownloadStatus.ERROR) AppColors.AccentRed else AppColors.SuccessGreen,
-            trackColor = AppColors.BgMain,
+            color = if (job.status == DownloadStatus.ERROR) colors.accentRed else colors.successGreen,
+            trackColor = colors.bgHover,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(6.dp)
@@ -1681,12 +1744,15 @@ private fun DownloadJobCard(
         )
 
         val etaPart = if (job.etaSeconds > 0) " (ETA ${job.etaSeconds}s)" else ""
-        Text("${job.message}$etaPart", color = AppColors.TextSecondary, fontSize = 11.sp)
+        Text("${job.message}$etaPart", color = colors.textSecondary, fontSize = 11.sp)
 
         if (job.status == DownloadStatus.COMPLETED && job.outputFilePath != null) {
             Button(
                 onClick = onPlay,
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.primaryBlue,
+                    contentColor = Color.White
+                ),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                 modifier = Modifier.height(32.dp)
             ) {
@@ -1705,12 +1771,13 @@ private fun LibraryFileCard(
     onShare: () -> Unit,
     onDelete: () -> Unit
 ) {
+    val colors = AppTheme.colors
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(AppColors.BgElevated)
-            .border(1.dp, AppColors.Border, RoundedCornerShape(10.dp))
+            .background(colors.bgElevated)
+            .border(1.dp, colors.border, RoundedCornerShape(10.dp))
             .padding(10.dp)
     ) {
         Row(
@@ -1720,7 +1787,7 @@ private fun LibraryFileCard(
         ) {
             Text(
                 "${if (file.isAudio) "🎵" else "🎬"} ${file.name}",
-                color = AppColors.TextPrimary,
+                color = colors.textPrimary,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 13.sp,
                 maxLines = 2,
@@ -1728,11 +1795,11 @@ private fun LibraryFileCard(
                 modifier = Modifier.weight(1f)
             )
             IconButton(onClick = onDelete, modifier = Modifier.size(26.dp)) {
-                Icon(Icons.Default.Delete, contentDescription = "Smazat", tint = AppColors.TextSecondary, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Delete, contentDescription = "Smazat", tint = colors.textSecondary, modifier = Modifier.size(16.dp))
             }
         }
         Spacer(Modifier.height(2.dp))
-        Text("${file.ext} • ${formatBytes(file.sizeBytes)}", color = AppColors.TextSecondary, fontSize = 11.sp)
+        Text("${file.ext} • ${formatBytes(file.sizeBytes)}", color = colors.textSecondary, fontSize = 11.sp)
         Spacer(Modifier.height(8.dp))
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1740,7 +1807,10 @@ private fun LibraryFileCard(
         ) {
             Button(
                 onClick = onPlay,
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.primaryBlue,
+                    contentColor = Color.White
+                ),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                 modifier = Modifier.height(32.dp)
             ) {
@@ -1748,19 +1818,21 @@ private fun LibraryFileCard(
             }
             OutlinedButton(
                 onClick = onOpenFfmpeg,
+                border = BorderStroke(1.dp, colors.border),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                 modifier = Modifier.height(32.dp)
             ) {
-                Text("⚙ FFmpeg", fontSize = 11.sp, color = AppColors.TextPrimary)
+                Text("⚙ FFmpeg", fontSize = 11.sp, color = colors.textPrimary)
             }
             OutlinedButton(
                 onClick = onShare,
+                border = BorderStroke(1.dp, colors.border),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                 modifier = Modifier.height(32.dp)
             ) {
-                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp), tint = AppColors.TextPrimary)
+                Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(14.dp), tint = colors.textPrimary)
                 Spacer(Modifier.width(4.dp))
-                Text("Sdílet", fontSize = 11.sp, color = AppColors.TextPrimary)
+                Text("Sdílet", fontSize = 11.sp, color = colors.textPrimary)
             }
         }
     }
@@ -1773,6 +1845,7 @@ private fun SearchOptionsStrip(
     onSelectSource: (SearchSourceFilter) -> Unit,
     onToggleSmart: () -> Unit
 ) {
+    val colors = AppTheme.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1785,9 +1858,9 @@ private fun SearchOptionsStrip(
         SearchSourceFilter.entries.forEach { source ->
             val selected = selectedSource == source
             val accent = when (source) {
-                SearchSourceFilter.YOUTUBE_MUSIC -> AppColors.YouTubeMusicPink
-                SearchSourceFilter.YOUTUBE -> AppColors.YouTubeRed
-                SearchSourceFilter.ALL -> AppColors.PrimaryBlue
+                SearchSourceFilter.YOUTUBE_MUSIC -> colors.youTubeMusicPink
+                SearchSourceFilter.YOUTUBE -> colors.youTubeRed
+                SearchSourceFilter.ALL -> colors.primaryBlue
             }
             FilterChip(
                 selected = selected,
@@ -1796,15 +1869,15 @@ private fun SearchOptionsStrip(
                     Text(source.label, fontSize = 11.sp, fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
                 },
                 colors = FilterChipDefaults.filterChipColors(
-                    containerColor = AppColors.BgSurface,
-                    labelColor = AppColors.TextSecondary,
-                    selectedContainerColor = accent.copy(alpha = 0.22f),
-                    selectedLabelColor = AppColors.TextPrimary
+                    containerColor = colors.bgSurface,
+                    labelColor = colors.textSecondary,
+                    selectedContainerColor = accent.copy(alpha = if (colors.isDark) 0.22f else 0.14f),
+                    selectedLabelColor = colors.textPrimary
                 ),
                 border = FilterChipDefaults.filterChipBorder(
                     enabled = true,
                     selected = selected,
-                    borderColor = AppColors.Border,
+                    borderColor = colors.border,
                     selectedBorderColor = accent
                 ),
                 modifier = Modifier.height(30.dp)
@@ -1819,7 +1892,7 @@ private fun SearchOptionsStrip(
                     Icons.Default.Psychology,
                     contentDescription = null,
                     modifier = Modifier.size(15.dp),
-                    tint = if (smartEnabled) AppColors.SuccessGreen else AppColors.TextSecondary
+                    tint = if (smartEnabled) colors.successGreen else colors.textSecondary
                 )
             },
             label = {
@@ -1830,16 +1903,16 @@ private fun SearchOptionsStrip(
                 )
             },
             colors = FilterChipDefaults.filterChipColors(
-                containerColor = AppColors.BgSurface,
-                labelColor = AppColors.TextSecondary,
-                selectedContainerColor = AppColors.SuccessGreen.copy(alpha = 0.16f),
-                selectedLabelColor = AppColors.SuccessGreen
+                containerColor = colors.bgSurface,
+                labelColor = colors.textSecondary,
+                selectedContainerColor = colors.successGreen.copy(alpha = if (colors.isDark) 0.16f else 0.12f),
+                selectedLabelColor = colors.successGreen
             ),
             border = FilterChipDefaults.filterChipBorder(
                 enabled = true,
                 selected = smartEnabled,
-                borderColor = AppColors.Border,
-                selectedBorderColor = AppColors.SuccessGreen
+                borderColor = colors.border,
+                selectedBorderColor = colors.successGreen
             ),
             modifier = Modifier.height(30.dp)
         )
@@ -1852,12 +1925,13 @@ private fun SmartSearchPlanCard(
     plan: SearchPlan,
     onSearchLiteral: () -> Unit
 ) {
+    val colors = AppTheme.colors
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(AppColors.PrimaryBlue.copy(alpha = 0.10f))
-            .border(1.dp, AppColors.PrimaryBlue.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
+            .background(colors.primaryBlue.copy(alpha = if (colors.isDark) 0.10f else 0.08f))
+            .border(1.dp, colors.primaryBlue.copy(alpha = 0.35f), RoundedCornerShape(10.dp))
             .padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -1873,12 +1947,12 @@ private fun SmartSearchPlanCard(
                 Icon(
                     Icons.Default.Psychology,
                     contentDescription = null,
-                    tint = AppColors.PrimaryBlue,
+                    tint = colors.primaryBlue,
                     modifier = Modifier.size(16.dp)
                 )
                 Text(
                     "Inteligentní analýza dotazu",
-                    color = AppColors.TextPrimary,
+                    color = colors.textPrimary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -1888,11 +1962,11 @@ private fun SmartSearchPlanCard(
                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                 modifier = Modifier.height(26.dp)
             ) {
-                Text("Hledat doslova", fontSize = 11.sp, color = AppColors.TextSecondary)
+                Text("Hledat doslova", fontSize = 11.sp, color = colors.textSecondary)
             }
         }
         if (plan.explanation.isNotBlank()) {
-            Text(plan.explanation, color = AppColors.TextSecondary, fontSize = 11.sp)
+            Text(plan.explanation, color = colors.textSecondary, fontSize = 11.sp)
         }
         if (plan.intentBadges.isNotEmpty()) {
             FlowRow(
@@ -1903,11 +1977,11 @@ private fun SmartSearchPlanCard(
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))
-                            .background(AppColors.BgElevated)
-                            .border(1.dp, AppColors.Border, RoundedCornerShape(50))
+                            .background(colors.bgElevated)
+                            .border(1.dp, colors.border, RoundedCornerShape(50))
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
-                        Text(badge, color = AppColors.TextPrimary, fontSize = 10.sp)
+                        Text(badge, color = colors.textPrimary, fontSize = 10.sp)
                     }
                 }
             }
@@ -1924,6 +1998,7 @@ private fun PlatformFilterRow(
     otherCount: Int,
     onSelect: (ResultPlatformFilter) -> Unit
 ) {
+    val colors = AppTheme.colors
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1945,10 +2020,10 @@ private fun PlatformFilterRow(
         options.forEach { (filter, label) ->
             val isSelected = selected == filter
             val accent = when (filter) {
-                ResultPlatformFilter.YOUTUBE_MUSIC -> AppColors.YouTubeMusicPink
-                ResultPlatformFilter.YOUTUBE -> AppColors.YouTubeRed
-                ResultPlatformFilter.OTHER -> AppColors.OtherPlatformTeal
-                ResultPlatformFilter.ALL -> AppColors.PrimaryBlue
+                ResultPlatformFilter.YOUTUBE_MUSIC -> colors.youTubeMusicPink
+                ResultPlatformFilter.YOUTUBE -> colors.youTubeRed
+                ResultPlatformFilter.OTHER -> colors.otherPlatformTeal
+                ResultPlatformFilter.ALL -> colors.primaryBlue
             }
             FilterChip(
                 selected = isSelected,
@@ -1957,15 +2032,15 @@ private fun PlatformFilterRow(
                     Text(label, fontSize = 11.sp, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal)
                 },
                 colors = FilterChipDefaults.filterChipColors(
-                    containerColor = AppColors.BgSurface,
-                    labelColor = AppColors.TextSecondary,
-                    selectedContainerColor = accent.copy(alpha = 0.22f),
-                    selectedLabelColor = AppColors.TextPrimary
+                    containerColor = colors.bgSurface,
+                    labelColor = colors.textSecondary,
+                    selectedContainerColor = accent.copy(alpha = if (colors.isDark) 0.22f else 0.14f),
+                    selectedLabelColor = colors.textPrimary
                 ),
                 border = FilterChipDefaults.filterChipBorder(
                     enabled = true,
                     selected = isSelected,
-                    borderColor = AppColors.Border,
+                    borderColor = colors.border,
                     selectedBorderColor = accent
                 ),
                 modifier = Modifier.height(30.dp)
@@ -1977,6 +2052,7 @@ private fun PlatformFilterRow(
 @kotlin.OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SearchQuickTagsCard(onSelectTag: (String) -> Unit) {
+    val colors = AppTheme.colors
     val tags = listOf(
         "🎧 Klidná hudba bez slov" to "chci si pustit klidnou hudbu na soustředění bez slov",
         "💪 Mix do fitka" to "energický mix do fitka na youtube music",
@@ -1987,14 +2063,14 @@ private fun SearchQuickTagsCard(onSelectTag: (String) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(AppColors.BgSurface)
-            .border(1.dp, AppColors.Border, RoundedCornerShape(10.dp))
+            .background(colors.bgSurface)
+            .border(1.dp, colors.border, RoundedCornerShape(10.dp))
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             "Hledejte přirozeným jazykem nebo vložte odkaz z YouTube či YouTube Music:",
-            color = AppColors.TextSecondary,
+            color = colors.textSecondary,
             fontSize = 13.sp
         )
         Spacer(Modifier.height(12.dp))
@@ -2006,8 +2082,8 @@ private fun SearchQuickTagsCard(onSelectTag: (String) -> Unit) {
                 FilledTonalButton(
                     onClick = { onSelectTag(query) },
                     colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = AppColors.BgElevated,
-                        contentColor = AppColors.TextPrimary
+                        containerColor = colors.bgElevated,
+                        contentColor = colors.textPrimary
                     )
                 ) {
                     Text(label, fontSize = 12.sp)
@@ -2019,51 +2095,54 @@ private fun SearchQuickTagsCard(onSelectTag: (String) -> Unit) {
 
 @Composable
 private fun SectionHeader(title: String, badge: String) {
+    val colors = AppTheme.colors
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(title, color = AppColors.TextPrimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
+        Text(title, color = colors.textPrimary, fontWeight = FontWeight.Bold, fontSize = 15.sp)
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(50))
-                .background(AppColors.BgElevated)
+                .background(colors.bgElevated)
                 .padding(horizontal = 8.dp, vertical = 2.dp)
         ) {
-            Text(badge, color = AppColors.TextSecondary, fontSize = 11.sp)
+            Text(badge, color = colors.textSecondary, fontSize = 11.sp)
         }
     }
 }
 
 @Composable
 private fun LoadingCard(text: String) {
+    val colors = AppTheme.colors
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(AppColors.BgSurface)
-            .border(1.dp, AppColors.Border, RoundedCornerShape(10.dp))
+            .background(colors.bgSurface)
+            .border(1.dp, colors.border, RoundedCornerShape(10.dp))
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CircularProgressIndicator(color = AppColors.PrimaryBlue)
+        CircularProgressIndicator(color = colors.primaryBlue)
         Spacer(Modifier.height(10.dp))
-        Text(text, color = AppColors.TextSecondary, fontSize = 13.sp)
+        Text(text, color = colors.textSecondary, fontSize = 13.sp)
     }
 }
 
 @Composable
 private fun EmptyStateCard(message: String) {
+    val colors = AppTheme.colors
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(AppColors.BgSurface)
-            .border(1.dp, AppColors.Border, RoundedCornerShape(10.dp))
+            .background(colors.bgSurface)
+            .border(1.dp, colors.border, RoundedCornerShape(10.dp))
             .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(message, color = AppColors.TextSecondary, fontSize = 13.sp)
+        Text(message, color = colors.textSecondary, fontSize = 13.sp)
     }
 }
 
@@ -2172,6 +2251,7 @@ private fun VoiceSearchDialog(
     onSystemFallback: () -> Unit,
     onCancel: () -> Unit
 ) {
+    val colors = AppTheme.colors
     val animatedRms by animateFloatAsState(
         targetValue = rmsNormalized.coerceIn(0f, 1f),
         animationSpec = tween(durationMillis = 90),
@@ -2191,8 +2271,8 @@ private fun VoiceSearchDialog(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(16.dp))
-                .background(AppColors.BgSurface)
-                .border(1.dp, AppColors.Border, RoundedCornerShape(16.dp))
+                .background(colors.bgSurface)
+                .border(1.dp, colors.border, RoundedCornerShape(16.dp))
                 .padding(18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -2204,20 +2284,20 @@ private fun VoiceSearchDialog(
             ) {
                 Text(
                     text = "Hlasové vyhledávání",
-                    color = AppColors.TextPrimary,
+                    color = colors.textPrimary,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp
                 )
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(AppColors.AccentRed.copy(alpha = 0.18f))
-                        .border(1.dp, AppColors.AccentRed.copy(alpha = 0.5f), RoundedCornerShape(50))
+                        .background(colors.accentRed.copy(alpha = if (colors.isDark) 0.18f else 0.12f))
+                        .border(1.dp, colors.accentRed.copy(alpha = 0.5f), RoundedCornerShape(50))
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
                         text = "● Poslouchám (CZ)",
-                        color = AppColors.AccentRed,
+                        color = colors.accentRed,
                         fontSize = 10.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -2239,7 +2319,7 @@ private fun VoiceSearchDialog(
                             scaleY = ringScale
                         }
                         .clip(CircleShape)
-                        .background(AppColors.PrimaryBlue.copy(alpha = 0.22f + animatedRms * 0.18f))
+                        .background(colors.primaryBlue.copy(alpha = 0.22f + animatedRms * 0.18f))
                 )
                 Box(
                     modifier = Modifier
@@ -2250,7 +2330,7 @@ private fun VoiceSearchDialog(
                             scaleY = micScale
                         }
                         .clip(CircleShape)
-                        .background(AppColors.PrimaryBlue),
+                        .background(colors.primaryBlue),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -2264,15 +2344,15 @@ private fun VoiceSearchDialog(
 
             Text(
                 text = if (partialText.isNotBlank()) partialText else "Řekněte dotaz přirozeným jazykem...",
-                color = if (partialText.isNotBlank()) AppColors.TextPrimary else AppColors.TextSecondary,
+                color = if (partialText.isNotBlank()) colors.textPrimary else colors.textSecondary,
                 fontSize = if (partialText.isNotBlank()) 15.sp else 13.sp,
                 fontWeight = if (partialText.isNotBlank()) FontWeight.SemiBold else FontWeight.Normal,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
-                    .background(AppColors.BgElevated)
-                    .border(1.dp, AppColors.Border, RoundedCornerShape(10.dp))
+                    .background(colors.bgElevated)
+                    .border(1.dp, colors.border, RoundedCornerShape(10.dp))
                     .padding(horizontal = 12.dp, vertical = 10.dp)
             )
 
@@ -2282,7 +2362,7 @@ private fun VoiceSearchDialog(
             ) {
                 Text(
                     text = "Příklady příkazů (klepnutím vyzkoušejte):",
-                    color = AppColors.TextSecondary,
+                    color = colors.textSecondary,
                     fontSize = 11.sp
                 )
                 FlowRow(
@@ -2293,14 +2373,14 @@ private fun VoiceSearchDialog(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(50))
-                                .background(AppColors.BgElevated)
-                                .border(1.dp, AppColors.Border, RoundedCornerShape(50))
+                                .background(colors.bgElevated)
+                                .border(1.dp, colors.border, RoundedCornerShape(50))
                                 .clickable { onSelectHint(example) }
                                 .padding(horizontal = 10.dp, vertical = 6.dp)
                         ) {
                             Text(
                                 text = example,
-                                color = AppColors.TextPrimary,
+                                color = colors.textPrimary,
                                 fontSize = 11.sp
                             )
                         }
@@ -2315,23 +2395,27 @@ private fun VoiceSearchDialog(
             ) {
                 OutlinedButton(
                     onClick = onSystemFallback,
+                    border = BorderStroke(1.dp, colors.border),
                     contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                     modifier = Modifier.weight(1f, fill = false)
                 ) {
                     Text(
                         "Systémový mikrofon",
                         fontSize = 12.sp,
-                        color = AppColors.TextPrimary,
+                        color = colors.textPrimary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
                 Button(
                     onClick = onCancel,
-                    colors = ButtonDefaults.buttonColors(containerColor = AppColors.BgElevated),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.bgElevated,
+                        contentColor = colors.textPrimary
+                    ),
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                 ) {
-                    Text("Zrušit", fontSize = 12.sp, color = AppColors.TextPrimary, maxLines = 1)
+                    Text("Zrušit", fontSize = 12.sp, color = colors.textPrimary, maxLines = 1)
                 }
             }
         }

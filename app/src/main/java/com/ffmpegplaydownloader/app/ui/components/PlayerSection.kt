@@ -3,6 +3,7 @@ package com.ffmpegplaydownloader.app.ui.components
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -71,7 +72,7 @@ import com.ffmpegplaydownloader.app.model.StreamMode
 import com.ffmpegplaydownloader.app.player.PlaybackExtrasManager
 import com.ffmpegplaydownloader.app.player.RepeatModeOption
 import com.ffmpegplaydownloader.app.player.SleepTimerPreset
-import com.ffmpegplaydownloader.app.ui.theme.AppColors
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 import com.ffmpegplaydownloader.app.viewmodel.MainUiState
 import kotlin.math.abs
 
@@ -98,6 +99,7 @@ fun PlayerSection(
     modifier: Modifier = Modifier
 ) {
     val current = state.currentMedia
+    val colors = AppTheme.colors
     var isDraggingSlider by remember { mutableStateOf(false) }
     var dragFraction by remember { mutableFloatStateOf(0f) }
 
@@ -105,8 +107,8 @@ fun PlayerSection(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(AppColors.BgSurface)
-            .border(1.dp, AppColors.Border, RoundedCornerShape(12.dp))
+            .background(colors.bgSurface)
+            .border(1.dp, colors.border, RoundedCornerShape(12.dp))
     ) {
         // Video / Audio Stage
         Box(
@@ -116,7 +118,7 @@ fun PlayerSection(
                     if (state.isFullscreen) Modifier.height(340.dp)
                     else Modifier.aspectRatio(16f / 9f)
                 )
-                .background(Color(0xFF05070B)),
+                .background(if (current == null) colors.bgElevated else Color(0xFF05070B)),
             contentAlignment = Alignment.Center
         ) {
             if (current == null) {
@@ -128,14 +130,14 @@ fun PlayerSection(
                     Spacer(Modifier.height(6.dp))
                     Text(
                         "Připraveno k přehrávání",
-                        color = AppColors.TextPrimary,
+                        color = colors.textPrimary,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
                         "Vyhledejte video či hudbu nebo vložte URL odkaz.",
-                        color = AppColors.TextSecondary,
+                        color = colors.textSecondary,
                         fontSize = 12.sp
                     )
                 }
@@ -163,7 +165,7 @@ fun PlayerSection(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(Color(0xFF0A0E17).copy(alpha = 0.92f)),
+                            .background(colors.bgElevated.copy(alpha = 0.97f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(
@@ -239,7 +241,7 @@ fun PlayerSection(
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(color = AppColors.PrimaryBlue)
+                            CircularProgressIndicator(color = colors.primaryBlue)
                             Spacer(Modifier.height(8.dp))
                             Text(
                                 "Načítám stream přes yt-dlp...",
@@ -255,7 +257,7 @@ fun PlayerSection(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .fillMaxWidth()
-                            .background(AppColors.AccentRed.copy(alpha = 0.9f))
+                            .background(colors.accentRed.copy(alpha = 0.92f))
                             .padding(8.dp)
                     ) {
                         Text(state.streamError, color = Color.White, fontSize = 12.sp)
@@ -269,7 +271,7 @@ fun PlayerSection(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(AppColors.BgElevated)
+                    .background(colors.bgElevated)
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 val totalMs = state.totalDurationMs.coerceAtLeast(1L)
@@ -290,7 +292,7 @@ fun PlayerSection(
                 ) {
                     Text(
                         text = YtDlpRepository.formatDuration(displayCurrentSec).ifEmpty { "0:00" },
-                        color = AppColors.TextPrimary,
+                        color = colors.textPrimary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -306,9 +308,9 @@ fun PlayerSection(
                             onSeekToMs(target)
                         },
                         colors = SliderDefaults.colors(
-                            thumbColor = AppColors.PrimaryBlue,
-                            activeTrackColor = AppColors.PrimaryBlue,
-                            inactiveTrackColor = AppColors.Border
+                            thumbColor = colors.primaryBlue,
+                            activeTrackColor = colors.primaryBlue,
+                            inactiveTrackColor = colors.border
                         ),
                         modifier = Modifier
                             .weight(1f)
@@ -317,7 +319,7 @@ fun PlayerSection(
                     Text(
                         text = YtDlpRepository.formatDuration(state.totalDurationMs / 1000L)
                             .ifEmpty { current.durationString.ifEmpty { "0:00" } },
-                        color = AppColors.TextSecondary,
+                        color = colors.textSecondary,
                         fontSize = 12.sp
                     )
                 }
@@ -360,7 +362,7 @@ fun PlayerSection(
             }
             Text(
                 text = current?.title ?: "Nic se nepřehrává",
-                color = AppColors.TextPrimary,
+                color = colors.textPrimary,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 14.sp,
                 maxLines = 2,
@@ -373,7 +375,7 @@ fun PlayerSection(
                     current.isLocal -> "📁 Lokální soubor (${current.ext})"
                     else -> "${current.channel}${if (current.durationString.isNotBlank()) " • ${current.durationString}" else ""}"
                 },
-                color = AppColors.TextSecondary,
+                color = colors.textSecondary,
                 fontSize = 12.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -416,6 +418,7 @@ private fun SeekControlsRow(
     onSeekByMs: (Long) -> Unit,
     onToggleSubtitles: () -> Unit
 ) {
+    val colors = AppTheme.colors
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -429,7 +432,7 @@ private fun SeekControlsRow(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
             modifier = Modifier.height(32.dp),
             colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = AppColors.PrimaryBlue,
+                containerColor = colors.primaryBlue,
                 contentColor = Color.White
             )
         ) {
@@ -444,24 +447,27 @@ private fun SeekControlsRow(
         OutlinedButton(
             onClick = onToggleSubtitles,
             enabled = subsEnabled,
+            border = BorderStroke(1.dp, if (subsEnabled) colors.border else colors.border.copy(alpha = 0.55f)),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 4.dp),
             modifier = Modifier.height(32.dp)
         ) {
-            Text(subText, fontSize = 11.sp, color = if (subsEnabled) AppColors.TextPrimary else AppColors.TextSecondary)
+            Text(subText, fontSize = 11.sp, color = if (subsEnabled) colors.textPrimary else colors.textSecondary)
         }
     }
 }
 
 @Composable
 private fun SmallControlChip(label: String, onClick: () -> Unit) {
+    val colors = AppTheme.colors
     FilledTonalButton(
         onClick = onClick,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp),
         modifier = Modifier.height(32.dp),
         colors = ButtonDefaults.filledTonalButtonColors(
-            containerColor = AppColors.BgSurface,
-            contentColor = AppColors.TextPrimary
-        )
+            containerColor = colors.bgSurface,
+            contentColor = colors.textPrimary
+        ),
+        border = BorderStroke(1.dp, colors.border.copy(alpha = 0.65f))
     ) {
         Text(label, fontSize = 11.sp)
     }
@@ -489,9 +495,12 @@ private fun StreamOptionsBar(
     onOpenDownload: () -> Unit,
     onToggleFullscreen: () -> Unit
 ) {
+    val colors = AppTheme.colors
     var modeExpanded by remember { mutableStateOf(false) }
     var filterExpanded by remember { mutableStateOf(false) }
     val extrasBadge = formatPlaybackExtrasBadge(playbackExtras)
+    val enabledTextColor = colors.textPrimary
+    val disabledTextColor = colors.textSecondary.copy(alpha = 0.55f)
 
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -501,19 +510,20 @@ private fun StreamOptionsBar(
         Box {
             OutlinedButton(
                 onClick = { modeExpanded = true },
+                border = BorderStroke(1.dp, colors.border),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                 modifier = Modifier.height(36.dp)
             ) {
-                Text(streamMode.label, fontSize = 11.sp, color = AppColors.TextPrimary)
+                Text(streamMode.label, fontSize = 11.sp, color = colors.textPrimary)
             }
             DropdownMenu(
                 expanded = modeExpanded,
                 onDismissRequest = { modeExpanded = false },
-                modifier = Modifier.background(AppColors.BgElevated)
+                modifier = Modifier.background(colors.bgElevated)
             ) {
                 StreamMode.entries.forEach { mode ->
                     DropdownMenuItem(
-                        text = { Text(mode.label, color = AppColors.TextPrimary, fontSize = 13.sp) },
+                        text = { Text(mode.label, color = colors.textPrimary, fontSize = 13.sp) },
                         onClick = {
                             modeExpanded = false
                             onStreamModeChange(mode)
@@ -526,19 +536,20 @@ private fun StreamOptionsBar(
         Box {
             OutlinedButton(
                 onClick = { filterExpanded = true },
+                border = BorderStroke(1.dp, colors.border),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                 modifier = Modifier.height(36.dp)
             ) {
-                Text(audioFilter.label, fontSize = 11.sp, color = AppColors.TextPrimary)
+                Text(audioFilter.label, fontSize = 11.sp, color = colors.textPrimary)
             }
             DropdownMenu(
                 expanded = filterExpanded,
                 onDismissRequest = { filterExpanded = false },
-                modifier = Modifier.background(AppColors.BgElevated)
+                modifier = Modifier.background(colors.bgElevated)
             ) {
                 AudioFilterMode.entries.forEach { filter ->
                     DropdownMenuItem(
-                        text = { Text(filter.label, color = AppColors.TextPrimary, fontSize = 13.sp) },
+                        text = { Text(filter.label, color = colors.textPrimary, fontSize = 13.sp) },
                         onClick = {
                             filterExpanded = false
                             onAudioFilterChange(filter)
@@ -553,8 +564,12 @@ private fun StreamOptionsBar(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
             modifier = Modifier.height(36.dp),
             colors = ButtonDefaults.filledTonalButtonColors(
-                containerColor = if (eqEnabled) AppColors.PrimaryBlue.copy(alpha = 0.25f) else AppColors.BgElevated,
-                contentColor = if (eqEnabled) AppColors.PrimaryBlue else AppColors.TextPrimary
+                containerColor = if (eqEnabled) {
+                    colors.primaryBlue.copy(alpha = if (colors.isDark) 0.25f else 0.14f)
+                } else {
+                    colors.bgElevated
+                },
+                contentColor = if (eqEnabled) colors.primaryBlue else colors.textPrimary
             )
         ) {
             Icon(Icons.Default.Equalizer, contentDescription = null, modifier = Modifier.size(16.dp))
@@ -571,14 +586,14 @@ private fun StreamOptionsBar(
             modifier = Modifier.height(36.dp),
             colors = ButtonDefaults.filledTonalButtonColors(
                 containerColor = when {
-                    extrasBadge.isTimerActive -> AppColors.WarningAmber.copy(alpha = 0.22f)
-                    extrasBadge.isAnyActive -> AppColors.PrimaryBlue.copy(alpha = 0.25f)
-                    else -> AppColors.BgElevated
+                    extrasBadge.isTimerActive -> colors.warningAmber.copy(alpha = if (colors.isDark) 0.22f else 0.15f)
+                    extrasBadge.isAnyActive -> colors.primaryBlue.copy(alpha = if (colors.isDark) 0.25f else 0.14f)
+                    else -> colors.bgElevated
                 },
                 contentColor = when {
-                    extrasBadge.isTimerActive -> AppColors.WarningAmber
-                    extrasBadge.isAnyActive -> AppColors.PrimaryBlue
-                    else -> AppColors.TextPrimary
+                    extrasBadge.isTimerActive -> colors.warningAmber
+                    extrasBadge.isAnyActive -> colors.primaryBlue
+                    else -> colors.textPrimary
                 }
             )
         ) {
@@ -589,60 +604,83 @@ private fun StreamOptionsBar(
             OutlinedButton(
                 onClick = onEnterPip,
                 enabled = currentExists,
+                border = BorderStroke(1.dp, if (currentExists) colors.border else colors.border.copy(alpha = 0.55f)),
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                 modifier = Modifier.height(36.dp)
             ) {
-                Icon(Icons.Default.PictureInPictureAlt, contentDescription = null, modifier = Modifier.size(16.dp), tint = AppColors.TextPrimary)
+                Icon(
+                    Icons.Default.PictureInPictureAlt,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
+                    tint = if (currentExists) enabledTextColor else disabledTextColor
+                )
                 Spacer(Modifier.width(4.dp))
-                Text("PiP", fontSize = 11.sp, color = AppColors.TextPrimary)
+                Text("PiP", fontSize = 11.sp, color = if (currentExists) enabledTextColor else disabledTextColor)
             }
         }
 
         OutlinedButton(
             onClick = onToggleFullscreen,
             enabled = currentExists,
+            border = BorderStroke(1.dp, if (currentExists) colors.border else colors.border.copy(alpha = 0.55f)),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
             modifier = Modifier.height(36.dp)
         ) {
-            Icon(Icons.Default.Fullscreen, contentDescription = null, modifier = Modifier.size(16.dp), tint = AppColors.TextPrimary)
+            Icon(
+                Icons.Default.Fullscreen,
+                contentDescription = null,
+                modifier = Modifier.size(16.dp),
+                tint = if (currentExists) enabledTextColor else disabledTextColor
+            )
             Spacer(Modifier.width(4.dp))
-            Text("Na šířku", fontSize = 11.sp, color = AppColors.TextPrimary)
+            Text("Na šířku", fontSize = 11.sp, color = if (currentExists) enabledTextColor else disabledTextColor)
         }
 
+        val favEnabled = currentExists && !isLocal
         OutlinedButton(
             onClick = onToggleFavorite,
-            enabled = currentExists && !isLocal,
+            enabled = favEnabled,
+            border = BorderStroke(1.dp, if (favEnabled) colors.border else colors.border.copy(alpha = 0.55f)),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
             modifier = Modifier.height(36.dp)
         ) {
             Icon(
                 imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
                 contentDescription = null,
-                tint = if (isFavorite) AppColors.GoldStar else AppColors.TextPrimary,
+                tint = when {
+                    !favEnabled -> disabledTextColor
+                    isFavorite -> colors.goldStar
+                    else -> enabledTextColor
+                },
                 modifier = Modifier.size(16.dp)
             )
             Spacer(Modifier.width(4.dp))
             Text(
                 if (isFavorite) "V oblíbených" else "Oblíbené",
                 fontSize = 11.sp,
-                color = if (isFavorite) AppColors.GoldStar else AppColors.TextPrimary
+                color = when {
+                    !favEnabled -> disabledTextColor
+                    isFavorite -> colors.goldStar
+                    else -> enabledTextColor
+                }
             )
         }
 
         OutlinedButton(
             onClick = onOpenShare,
             enabled = currentExists,
+            border = BorderStroke(1.dp, if (currentExists) colors.border else colors.border.copy(alpha = 0.55f)),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp, vertical = 6.dp),
             modifier = Modifier.height(36.dp)
         ) {
             Icon(
                 imageVector = Icons.Default.Cast,
                 contentDescription = null,
-                tint = AppColors.PrimaryBlue,
+                tint = if (currentExists) colors.primaryBlue else disabledTextColor,
                 modifier = Modifier.size(16.dp)
             )
             Spacer(Modifier.width(4.dp))
-            Text("Sdílet / Cast", fontSize = 11.sp, color = AppColors.TextPrimary)
+            Text("Sdílet / Cast", fontSize = 11.sp, color = if (currentExists) enabledTextColor else disabledTextColor)
         }
 
         Button(
@@ -651,8 +689,10 @@ private fun StreamOptionsBar(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp),
             modifier = Modifier.height(36.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = AppColors.AccentRed,
-                contentColor = Color.White
+                containerColor = colors.accentRed,
+                contentColor = Color.White,
+                disabledContainerColor = colors.bgElevated,
+                disabledContentColor = disabledTextColor
             )
         ) {
             Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))

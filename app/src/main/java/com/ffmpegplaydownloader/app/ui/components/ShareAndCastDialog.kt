@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.ffmpegplaydownloader.app.data.ShareCastHelper
 import com.ffmpegplaydownloader.app.model.MediaItem
 import com.ffmpegplaydownloader.app.model.MediaPlatform
-import com.ffmpegplaydownloader.app.ui.theme.AppColors
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 
 private enum class PendingStreamAction {
     CAST_VIDEO,
@@ -78,6 +78,7 @@ fun ShareAndCastDialog(
     onRequestResolveStream: () -> Unit,
     onShowStatus: (String) -> Unit
 ) {
+    val colors = AppTheme.colors
     val context = LocalContext.current
     @Suppress("DEPRECATION")
     val clipboardManager = LocalClipboardManager.current
@@ -168,7 +169,7 @@ fun ShareAndCastDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = AppColors.BgSurface,
+        containerColor = colors.bgSurface,
         title = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -177,12 +178,12 @@ fun ShareAndCastDialog(
                 Icon(
                     imageVector = Icons.Default.Cast,
                     contentDescription = null,
-                    tint = AppColors.PrimaryBlue,
+                    tint = colors.primaryBlue,
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
                     text = "Sdílet, Cast & Zrcadlení",
-                    color = AppColors.TextPrimary,
+                    color = colors.textPrimary,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -200,8 +201,8 @@ fun ShareAndCastDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(AppColors.BgElevated)
-                        .border(1.dp, AppColors.Border, RoundedCornerShape(10.dp))
+                        .background(colors.bgElevated)
+                        .border(1.dp, colors.border, RoundedCornerShape(10.dp))
                         .padding(10.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -217,7 +218,7 @@ fun ShareAndCastDialog(
                         if (item.durationString.isNotBlank()) {
                             Text(
                                 text = item.durationString,
-                                color = AppColors.TextSecondary,
+                                color = colors.textSecondary,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -225,7 +226,7 @@ fun ShareAndCastDialog(
                     }
                     Text(
                         text = item.title.ifBlank { "Bez názvu" },
-                        color = AppColors.TextPrimary,
+                        color = colors.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 2,
@@ -239,7 +240,7 @@ fun ShareAndCastDialog(
                     if (subtitleText.isNotBlank()) {
                         Text(
                             text = subtitleText,
-                            color = AppColors.TextSecondary,
+                            color = colors.textSecondary,
                             fontSize = 11.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -248,7 +249,7 @@ fun ShareAndCastDialog(
                 }
 
                 if (inlineNotice != null) {
-                    val noticeColor = if (inlineNoticeIsError) AppColors.WarningAmber else AppColors.SuccessGreen
+                    val noticeColor = if (inlineNoticeIsError) colors.warningAmber else colors.successGreen
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -267,7 +268,7 @@ fun ShareAndCastDialog(
                         )
                         Text(
                             text = inlineNotice!!,
-                            color = AppColors.TextPrimary,
+                            color = colors.textPrimary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -279,7 +280,7 @@ fun ShareAndCastDialog(
 
                 ShareActionTile(
                     icon = Icons.Default.Tv,
-                    accentColor = AppColors.PrimaryBlue,
+                    accentColor = colors.primaryBlue,
                     title = "Zrcadlení obrazovky (Cast / Wireless Display)",
                     subtitle = "Otevře systémový výběr Chromecast, Smart TV nebo bezdrátové obrazovky",
                     onClick = {
@@ -293,7 +294,7 @@ fun ShareAndCastDialog(
                 val resolvingVideo = isResolvingStream && pendingAction == PendingStreamAction.CAST_VIDEO
                 ShareActionTile(
                     icon = Icons.Default.CastConnected,
-                    accentColor = AppColors.SuccessGreen,
+                    accentColor = colors.successGreen,
                     title = "Odeslat video stream do Cast / externího přehrávače",
                     subtitle = when {
                         resolvingVideo -> "Získávám přímou adresu video streamu…"
@@ -336,7 +337,7 @@ fun ShareAndCastDialog(
                 val resolvingAudio = isResolvingStream && pendingAction == PendingStreamAction.CAST_AUDIO
                 ShareActionTile(
                     icon = Icons.Default.MusicNote,
-                    accentColor = AppColors.YouTubeMusicPink,
+                    accentColor = colors.youTubeMusicPink,
                     title = "Odeslat audio stream do reproduktoru / přehrávače",
                     subtitle = when {
                         resolvingAudio -> "Získávám přímou adresu audio streamu…"
@@ -379,14 +380,14 @@ fun ShareAndCastDialog(
                     }
                 )
 
-                HorizontalDivider(color = AppColors.Border, modifier = Modifier.padding(vertical = 2.dp))
+                HorizontalDivider(color = colors.border, modifier = Modifier.padding(vertical = 2.dp))
 
                 // Section 2: Share & Broadcast
                 SectionHeader("📡 Sdílet & Broadcast do aplikací")
 
                 ShareActionTile(
                     icon = Icons.Default.Share,
-                    accentColor = AppColors.PrimaryBlue,
+                    accentColor = colors.primaryBlue,
                     title = "Sdílet do aplikací (Broadcast / Zprávy / Bluetooth / Nearby…)",
                     subtitle = if (item.isLocal) {
                         "Odešle stažený mediální soubor do vybrané aplikace"
@@ -416,7 +417,7 @@ fun ShareAndCastDialog(
                 if (!item.isLocal && item.url.isNotBlank()) {
                     ShareActionTile(
                         icon = Icons.Default.Link,
-                        accentColor = AppColors.WarningAmber,
+                        accentColor = colors.warningAmber,
                         title = "Kopírovat odkaz (${item.platform.shortLabel})",
                         subtitle = item.url,
                         onClick = {
@@ -430,7 +431,7 @@ fun ShareAndCastDialog(
                     val resolvingCopy = isResolvingStream && pendingAction == PendingStreamAction.COPY_STREAM_URL
                     ShareActionTile(
                         icon = Icons.Default.ContentCopy,
-                        accentColor = AppColors.SuccessGreen,
+                        accentColor = colors.successGreen,
                         title = "Kopírovat přímou URL streamu",
                         subtitle = if (resolvingCopy) {
                             "Získávám přímou URL streamu pro VLC / IPTV / Kodi…"
@@ -457,7 +458,7 @@ fun ShareAndCastDialog(
                 } else if (item.localPath.isNotBlank()) {
                     ShareActionTile(
                         icon = Icons.Default.ContentCopy,
-                        accentColor = AppColors.WarningAmber,
+                        accentColor = colors.warningAmber,
                         title = "Kopírovat cestu k souboru",
                         subtitle = item.localPath,
                         onClick = {
@@ -470,7 +471,7 @@ fun ShareAndCastDialog(
                 if (!item.isLocal && item.url.isNotBlank()) {
                     ShareActionTile(
                         icon = Icons.AutoMirrored.Filled.OpenInNew,
-                        accentColor = AppColors.TextSecondary,
+                        accentColor = colors.textSecondary,
                         title = "Otevřít v prohlížeči / původní aplikaci",
                         subtitle = "Spustí originální zdroj (${item.platform.displayName})",
                         onClick = {
@@ -485,7 +486,7 @@ fun ShareAndCastDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Zavřít", color = AppColors.TextPrimary, fontWeight = FontWeight.SemiBold)
+                Text("Zavřít", color = colors.textPrimary, fontWeight = FontWeight.SemiBold)
             }
         }
     )
@@ -495,7 +496,7 @@ fun ShareAndCastDialog(
 private fun SectionHeader(title: String) {
     Text(
         text = title,
-        color = AppColors.TextPrimary,
+        color = AppTheme.colors.textPrimary,
         fontSize = 12.sp,
         fontWeight = FontWeight.Bold,
         modifier = Modifier.padding(top = 2.dp)
@@ -512,16 +513,17 @@ private fun ShareActionTile(
     badgeText: String? = null,
     onClick: () -> Unit
 ) {
+    val colors = AppTheme.colors
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(AppColors.BgElevated)
+            .background(colors.bgElevated)
             .border(
                 width = 1.dp,
-                color = if (isLoading) accentColor.copy(alpha = 0.7f) else AppColors.Border,
+                color = if (isLoading) accentColor.copy(alpha = 0.7f) else colors.border,
                 shape = RoundedCornerShape(10.dp)
             )
             .clickable(onClick = onClick)
@@ -548,7 +550,7 @@ private fun ShareActionTile(
         ) {
             Text(
                 text = title,
-                color = AppColors.TextPrimary,
+                color = colors.textPrimary,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 2,
@@ -557,7 +559,7 @@ private fun ShareActionTile(
             if (subtitle.isNotBlank()) {
                 Text(
                     text = subtitle,
-                    color = AppColors.TextSecondary,
+                    color = colors.textSecondary,
                     fontSize = 10.sp,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -590,7 +592,7 @@ private fun ShareActionTile(
                 Icon(
                     imageVector = Icons.Default.ChevronRight,
                     contentDescription = null,
-                    tint = AppColors.TextSecondary,
+                    tint = colors.textSecondary,
                     modifier = Modifier.size(18.dp)
                 )
             }

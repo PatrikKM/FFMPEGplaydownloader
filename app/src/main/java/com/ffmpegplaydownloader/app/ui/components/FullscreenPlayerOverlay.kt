@@ -11,6 +11,7 @@ import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -84,7 +85,7 @@ import coil.compose.AsyncImage
 import com.ffmpegplaydownloader.app.data.YtDlpRepository
 import com.ffmpegplaydownloader.app.model.MediaPlatform
 import com.ffmpegplaydownloader.app.model.StreamMode
-import com.ffmpegplaydownloader.app.ui.theme.AppColors
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 import com.ffmpegplaydownloader.app.viewmodel.MainUiState
 import kotlinx.coroutines.delay
 
@@ -109,6 +110,7 @@ fun FullscreenPlayerOverlay(
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
     val current = state.currentMedia
+    val colors = AppTheme.colors
 
     var controlsVisible by remember { mutableStateOf(true) }
     var interactionTick by remember { mutableIntStateOf(0) }
@@ -253,7 +255,11 @@ fun FullscreenPlayerOverlay(
                             overflow = TextOverflow.Ellipsis
                         )
                         if (current.channel.isNotBlank()) {
-                            Text(current.channel, color = AppColors.TextSecondary, fontSize = 13.sp)
+                            Text(
+                                current.channel,
+                                color = Color.White.copy(alpha = 0.78f),
+                                fontSize = 13.sp
+                            )
                         }
                     }
                 }
@@ -268,7 +274,7 @@ fun FullscreenPlayerOverlay(
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(color = AppColors.PrimaryBlue)
+                    CircularProgressIndicator(color = colors.primaryBlue)
                     Spacer(Modifier.height(8.dp))
                     Text("Načítám stream přes yt-dlp...", color = Color.White, fontSize = 13.sp)
                 }
@@ -323,7 +329,8 @@ fun FullscreenPlayerOverlay(
                             PlatformBadge(
                                 platform = if (current.isLocal) MediaPlatform.LOCAL else current.platform,
                                 extractor = current.extractor,
-                                contentKind = current.contentKind
+                                contentKind = current.contentKind,
+                                solid = true
                             )
                             Text(
                                 text = current.title,
@@ -351,6 +358,11 @@ fun FullscreenPlayerOverlay(
                                     interactionTick++
                                     onToggleSubtitles()
                                 },
+                                border = BorderStroke(1.dp, Color.White.copy(alpha = 0.45f)),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = Color.Black.copy(alpha = 0.55f),
+                                    contentColor = Color.White
+                                ),
                                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
                                 modifier = Modifier.height(32.dp)
                             ) {
@@ -370,8 +382,8 @@ fun FullscreenPlayerOverlay(
                             },
                             colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = when {
-                                    extrasBadge.isTimerActive -> AppColors.WarningAmber.copy(alpha = 0.85f)
-                                    extrasBadge.isAnyActive -> AppColors.PrimaryBlue.copy(alpha = 0.85f)
+                                    extrasBadge.isTimerActive -> colors.warningAmber.copy(alpha = 0.88f)
+                                    extrasBadge.isAnyActive -> colors.primaryBlue.copy(alpha = 0.88f)
                                     else -> Color.Black.copy(alpha = 0.6f)
                                 },
                                 contentColor = Color.White
@@ -389,7 +401,7 @@ fun FullscreenPlayerOverlay(
                             },
                             colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = if (state.equalizerState.enabled) {
-                                    AppColors.PrimaryBlue.copy(alpha = 0.85f)
+                                    colors.primaryBlue.copy(alpha = 0.88f)
                                 } else {
                                     Color.Black.copy(alpha = 0.6f)
                                 },
@@ -490,7 +502,7 @@ fun FullscreenPlayerOverlay(
                         modifier = Modifier
                             .size(68.dp)
                             .clip(CircleShape)
-                            .background(AppColors.PrimaryBlue.copy(alpha = 0.9f))
+                            .background(colors.primaryBlue.copy(alpha = 0.9f))
                     ) {
                         Icon(
                             imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
@@ -563,8 +575,8 @@ fun FullscreenPlayerOverlay(
                                 onSeekToMs(target)
                             },
                             colors = SliderDefaults.colors(
-                                thumbColor = AppColors.PrimaryBlue,
-                                activeTrackColor = AppColors.PrimaryBlue,
+                                thumbColor = colors.primaryBlue,
+                                activeTrackColor = colors.primaryBlue,
                                 inactiveTrackColor = Color.White.copy(alpha = 0.3f)
                             ),
                             modifier = Modifier.weight(1f)

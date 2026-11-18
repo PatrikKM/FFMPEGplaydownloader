@@ -21,6 +21,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -34,7 +35,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.sp
 import com.ffmpegplaydownloader.app.data.LocalFfmpegAction
 import com.ffmpegplaydownloader.app.data.LocalFfmpegProcessor
 import com.ffmpegplaydownloader.app.model.LocalMediaFile
-import com.ffmpegplaydownloader.app.ui.theme.AppColors
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 import java.util.Locale
 
 @Composable
@@ -58,6 +58,7 @@ fun LocalFfmpegDialog(
         trimEnd: String
     ) -> Unit
 ) {
+    val colors = AppTheme.colors
     var selectedAction by remember(file.path) {
         mutableStateOf(
             if (file.isAudio) LocalFfmpegAction.NORMALIZE_LOUDNESS
@@ -91,13 +92,29 @@ fun LocalFfmpegDialog(
         trimValidationError == null &&
         !(file.isAudio && selectedAction == LocalFfmpegAction.COMPRESS_720P)
 
+    val trimFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = colors.primaryBlue,
+        unfocusedBorderColor = colors.border,
+        disabledBorderColor = colors.border.copy(alpha = 0.5f),
+        focusedTextColor = colors.textPrimary,
+        unfocusedTextColor = colors.textPrimary,
+        disabledTextColor = colors.textSecondary,
+        focusedLabelColor = colors.primaryBlue,
+        unfocusedLabelColor = colors.textSecondary,
+        disabledLabelColor = colors.textSecondary,
+        focusedContainerColor = colors.bgMain,
+        unfocusedContainerColor = colors.bgMain,
+        disabledContainerColor = colors.bgMain,
+        cursorColor = colors.primaryBlue
+    )
+
     AlertDialog(
         onDismissRequest = { if (!isProcessing) onDismiss() },
-        containerColor = AppColors.BgSurface,
+        containerColor = colors.bgSurface,
         title = {
             Text(
                 "⚙️ Lokální FFmpeg konverze",
-                color = AppColors.TextPrimary,
+                color = colors.textPrimary,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -113,14 +130,14 @@ fun LocalFfmpegDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(AppColors.BgElevated)
-                        .border(1.dp, AppColors.Border, RoundedCornerShape(8.dp))
+                        .background(colors.bgElevated)
+                        .border(1.dp, colors.border, RoundedCornerShape(8.dp))
                         .padding(10.dp),
                     verticalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
                     Text(
                         text = "${if (file.isAudio) "🎵" else "🎬"} ${file.name}",
-                        color = AppColors.TextPrimary,
+                        color = colors.textPrimary,
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         maxLines = 2,
@@ -128,14 +145,14 @@ fun LocalFfmpegDialog(
                     )
                     Text(
                         text = "${file.ext} • ${formatLocalFileBytes(file.sizeBytes)}",
-                        color = AppColors.TextSecondary,
+                        color = colors.textSecondary,
                         fontSize = 11.sp
                     )
                 }
 
                 Text(
                     "Vyberte operaci:",
-                    color = AppColors.TextPrimary,
+                    color = colors.textPrimary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -146,12 +163,14 @@ fun LocalFfmpegDialog(
                             !(file.isAudio && action == LocalFfmpegAction.COMPRESS_720P)
                         val selected = selectedAction == action
                         val borderColor = when {
-                            selected -> AppColors.PrimaryBlue
-                            else -> AppColors.Border
+                            selected -> colors.primaryBlue
+                            else -> colors.border
                         }
                         val bgColor = when {
-                            selected -> AppColors.PrimaryBlue.copy(alpha = 0.16f)
-                            else -> AppColors.BgElevated
+                            selected -> colors.primaryBlue.copy(
+                                alpha = if (colors.isDark) 0.16f else 0.10f
+                            )
+                            else -> colors.bgElevated
                         }
 
                         Row(
@@ -171,7 +190,7 @@ fun LocalFfmpegDialog(
                                     .clip(CircleShape)
                                     .border(
                                         width = 2.dp,
-                                        color = if (selected) AppColors.PrimaryBlue else AppColors.TextSecondary,
+                                        color = if (selected) colors.primaryBlue else colors.textSecondary,
                                         shape = CircleShape
                                     ),
                                 contentAlignment = Alignment.Center
@@ -181,7 +200,7 @@ fun LocalFfmpegDialog(
                                         modifier = Modifier
                                             .size(8.dp)
                                             .clip(CircleShape)
-                                            .background(AppColors.PrimaryBlue)
+                                            .background(colors.primaryBlue)
                                     )
                                 }
                             }
@@ -189,14 +208,14 @@ fun LocalFfmpegDialog(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = action.label,
-                                    color = AppColors.TextPrimary,
+                                    color = colors.textPrimary,
                                     fontSize = 12.sp,
                                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal
                                 )
                                 if (file.isAudio && action == LocalFfmpegAction.COMPRESS_720P) {
                                     Text(
                                         text = "Dostupné pouze pro video soubory",
-                                        color = AppColors.TextSecondary,
+                                        color = colors.textSecondary,
                                         fontSize = 10.sp
                                     )
                                 }
@@ -209,7 +228,7 @@ fun LocalFfmpegDialog(
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(
                             "Časový výřez (formát MM:SS nebo HH:MM:SS):",
-                            color = AppColors.TextSecondary,
+                            color = colors.textSecondary,
                             fontSize = 11.sp
                         )
                         Row(
@@ -221,18 +240,9 @@ fun LocalFfmpegDialog(
                                 onValueChange = { trimStart = it },
                                 enabled = !isProcessing,
                                 label = { Text("Od (MM:SS)", fontSize = 11.sp) },
-                                placeholder = { Text("0:15", fontSize = 11.sp, color = AppColors.TextSecondary) },
+                                placeholder = { Text("0:15", fontSize = 11.sp, color = colors.textSecondary) },
                                 singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = AppColors.PrimaryBlue,
-                                    unfocusedBorderColor = AppColors.Border,
-                                    focusedTextColor = AppColors.TextPrimary,
-                                    unfocusedTextColor = AppColors.TextPrimary,
-                                    focusedLabelColor = AppColors.PrimaryBlue,
-                                    unfocusedLabelColor = AppColors.TextSecondary,
-                                    focusedContainerColor = AppColors.BgMain,
-                                    unfocusedContainerColor = AppColors.BgMain
-                                ),
+                                colors = trimFieldColors,
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.weight(1f)
                             )
@@ -241,18 +251,9 @@ fun LocalFfmpegDialog(
                                 onValueChange = { trimEnd = it },
                                 enabled = !isProcessing,
                                 label = { Text("Do (MM:SS)", fontSize = 11.sp) },
-                                placeholder = { Text("1:45", fontSize = 11.sp, color = AppColors.TextSecondary) },
+                                placeholder = { Text("1:45", fontSize = 11.sp, color = colors.textSecondary) },
                                 singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = AppColors.PrimaryBlue,
-                                    unfocusedBorderColor = AppColors.Border,
-                                    focusedTextColor = AppColors.TextPrimary,
-                                    unfocusedTextColor = AppColors.TextPrimary,
-                                    focusedLabelColor = AppColors.PrimaryBlue,
-                                    unfocusedLabelColor = AppColors.TextSecondary,
-                                    focusedContainerColor = AppColors.BgMain,
-                                    unfocusedContainerColor = AppColors.BgMain
-                                ),
+                                colors = trimFieldColors,
                                 shape = RoundedCornerShape(8.dp),
                                 modifier = Modifier.weight(1f)
                             )
@@ -260,7 +261,7 @@ fun LocalFfmpegDialog(
                         if (trimValidationError != null && (trimStart.isNotBlank() || trimEnd.isNotBlank())) {
                             Text(
                                 text = trimValidationError,
-                                color = AppColors.WarningAmber,
+                                color = colors.warningAmber,
                                 fontSize = 11.sp
                             )
                         }
@@ -272,15 +273,15 @@ fun LocalFfmpegDialog(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(8.dp))
-                            .background(AppColors.BgMain)
-                            .border(1.dp, AppColors.Border, RoundedCornerShape(8.dp))
+                            .background(colors.bgMain)
+                            .border(1.dp, colors.border, RoundedCornerShape(8.dp))
                             .padding(10.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         LinearProgressIndicator(
                             progress = { progress.coerceIn(0f, 1f) },
-                            color = AppColors.SuccessGreen,
-                            trackColor = AppColors.BgElevated,
+                            color = colors.successGreen,
+                            trackColor = if (colors.isDark) colors.bgElevated else colors.border,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(6.dp)
@@ -289,7 +290,7 @@ fun LocalFfmpegDialog(
                         if (statusMessage.isNotBlank()) {
                             Text(
                                 text = statusMessage,
-                                color = AppColors.TextSecondary,
+                                color = colors.textSecondary,
                                 fontSize = 11.sp
                             )
                         }
@@ -308,14 +309,13 @@ fun LocalFfmpegDialog(
                 },
                 enabled = canLaunch,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = AppColors.PrimaryBlue,
-                    disabledContainerColor = AppColors.BgElevated
+                    containerColor = colors.primaryBlue,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = colors.bgElevated,
+                    disabledContentColor = colors.textSecondary
                 )
             ) {
-                Text(
-                    if (isProcessing) "Zpracovávám..." else "🚀 Spustit FFmpeg",
-                    color = if (canLaunch) Color.White else AppColors.TextSecondary
-                )
+                Text(if (isProcessing) "Zpracovávám..." else "🚀 Spustit FFmpeg")
             }
         },
         dismissButton = {
@@ -325,7 +325,7 @@ fun LocalFfmpegDialog(
             ) {
                 Text(
                     "Zrušit",
-                    color = if (!isProcessing) AppColors.TextSecondary else AppColors.Border
+                    color = if (!isProcessing) colors.textSecondary else colors.border
                 )
             }
         }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -16,13 +17,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ffmpegplaydownloader.app.model.MediaPlatform
-import com.ffmpegplaydownloader.app.ui.theme.AppColors
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 
+@Composable
+@ReadOnlyComposable
 fun platformAccentColor(platform: MediaPlatform): Color = when (platform) {
-    MediaPlatform.YOUTUBE_MUSIC -> AppColors.YouTubeMusicPink
-    MediaPlatform.YOUTUBE -> AppColors.YouTubeRed
-    MediaPlatform.OTHER -> AppColors.OtherPlatformTeal
-    MediaPlatform.LOCAL -> AppColors.SuccessGreen
+    MediaPlatform.YOUTUBE_MUSIC -> AppTheme.colors.youTubeMusicPink
+    MediaPlatform.YOUTUBE -> AppTheme.colors.youTubeRed
+    MediaPlatform.OTHER -> AppTheme.colors.otherPlatformTeal
+    MediaPlatform.LOCAL -> AppTheme.colors.successGreen
 }
 
 @Composable
@@ -33,6 +36,7 @@ fun PlatformBadge(
     solid: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val colors = AppTheme.colors
     val accent = platformAccentColor(platform)
     val label = when (platform) {
         MediaPlatform.YOUTUBE_MUSIC -> "🎧 YT Music"
@@ -49,9 +53,16 @@ fun PlatformBadge(
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         modifier = modifier
             .clip(RoundedCornerShape(6.dp))
-            .background(if (solid) accent.copy(alpha = 0.92f) else accent.copy(alpha = 0.16f))
+            .background(
+                if (solid) accent.copy(alpha = 0.92f)
+                else accent.copy(alpha = if (colors.isDark) 0.16f else 0.12f)
+            )
             .then(
-                if (!solid) Modifier.border(1.dp, accent.copy(alpha = 0.5f), RoundedCornerShape(6.dp))
+                if (!solid) Modifier.border(
+                    1.dp,
+                    accent.copy(alpha = if (colors.isDark) 0.5f else 0.45f),
+                    RoundedCornerShape(6.dp)
+                )
                 else Modifier
             )
             .padding(horizontal = 7.dp, vertical = 3.dp)

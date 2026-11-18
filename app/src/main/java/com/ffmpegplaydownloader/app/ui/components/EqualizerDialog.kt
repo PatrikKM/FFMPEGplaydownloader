@@ -20,8 +20,10 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
@@ -32,14 +34,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ffmpegplaydownloader.app.model.EqualizerPreset
 import com.ffmpegplaydownloader.app.model.EqualizerState
-import com.ffmpegplaydownloader.app.ui.theme.AppColors
+import com.ffmpegplaydownloader.app.ui.theme.AppTheme
 import java.util.Locale
 import kotlin.math.abs
 
@@ -54,9 +55,11 @@ fun EqualizerDialog(
     onLoudnessToggle: (Boolean) -> Unit,
     onReset: () -> Unit
 ) {
+    val colors = AppTheme.colors
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = AppColors.BgSurface,
+        containerColor = colors.bgSurface,
         title = {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -66,13 +69,13 @@ fun EqualizerDialog(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         "🎚️ Equalizér & Zvuk",
-                        color = AppColors.TextPrimary,
+                        color = colors.textPrimary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         if (state.enabled) "Aktivní • ${state.preset.label}" else "Vypnuto (originální zvuk)",
-                        color = if (state.enabled) AppColors.SuccessGreen else AppColors.TextSecondary,
+                        color = if (state.enabled) colors.successGreen else colors.textSecondary,
                         fontSize = 11.sp
                     )
                 }
@@ -80,8 +83,11 @@ fun EqualizerDialog(
                     checked = state.enabled,
                     onCheckedChange = onToggleEnabled,
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = AppColors.PrimaryBlue
+                        checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                        checkedTrackColor = colors.primaryBlue,
+                        uncheckedThumbColor = colors.textSecondary,
+                        uncheckedTrackColor = colors.bgElevated,
+                        uncheckedBorderColor = colors.border
                     )
                 )
             }
@@ -112,16 +118,18 @@ fun EqualizerDialog(
                                 onClick = { onSelectPreset(preset) },
                                 label = { Text(preset.label, fontSize = 11.sp) },
                                 colors = FilterChipDefaults.filterChipColors(
-                                    containerColor = AppColors.BgElevated,
-                                    labelColor = AppColors.TextSecondary,
-                                    selectedContainerColor = AppColors.PrimaryBlue.copy(alpha = 0.25f),
-                                    selectedLabelColor = AppColors.TextPrimary
+                                    containerColor = colors.bgElevated,
+                                    labelColor = colors.textSecondary,
+                                    selectedContainerColor = colors.primaryBlue.copy(
+                                        alpha = if (colors.isDark) 0.25f else 0.15f
+                                    ),
+                                    selectedLabelColor = colors.textPrimary
                                 ),
                                 border = FilterChipDefaults.filterChipBorder(
                                     enabled = true,
                                     selected = selected,
-                                    borderColor = AppColors.Border,
-                                    selectedBorderColor = AppColors.PrimaryBlue
+                                    borderColor = colors.border,
+                                    selectedBorderColor = colors.primaryBlue
                                 ),
                                 modifier = Modifier.height(30.dp)
                             )
@@ -143,17 +151,17 @@ fun EqualizerDialog(
                         ) {
                             Text(
                                 band.label,
-                                color = AppColors.TextPrimary,
+                                color = colors.textPrimary,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.SemiBold
                             )
                             Text(
                                 dbText,
                                 color = when {
-                                    !state.enabled -> AppColors.TextSecondary
-                                    band.levelMb > 0 -> AppColors.SuccessGreen
-                                    band.levelMb < 0 -> AppColors.WarningAmber
-                                    else -> AppColors.TextSecondary
+                                    !state.enabled -> colors.textSecondary
+                                    band.levelMb > 0 -> colors.successGreen
+                                    band.levelMb < 0 -> colors.warningAmber
+                                    else -> colors.textSecondary
                                 },
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium
@@ -168,9 +176,9 @@ fun EqualizerDialog(
                             },
                             valueRange = minF..maxF,
                             colors = SliderDefaults.colors(
-                                thumbColor = if (state.enabled) AppColors.PrimaryBlue else AppColors.TextSecondary,
-                                activeTrackColor = if (state.enabled) AppColors.PrimaryBlue else AppColors.Border,
-                                inactiveTrackColor = AppColors.BgElevated
+                                thumbColor = if (state.enabled) colors.primaryBlue else colors.textSecondary,
+                                activeTrackColor = if (state.enabled) colors.primaryBlue else colors.border,
+                                inactiveTrackColor = colors.bgHover
                             ),
                             modifier = Modifier.height(28.dp)
                         )
@@ -182,8 +190,8 @@ fun EqualizerDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
-                        .background(AppColors.BgElevated)
-                        .border(1.dp, AppColors.Border, RoundedCornerShape(8.dp))
+                        .background(colors.bgElevated)
+                        .border(1.dp, colors.border, RoundedCornerShape(8.dp))
                         .padding(horizontal = 10.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
@@ -194,13 +202,13 @@ fun EqualizerDialog(
                     ) {
                         Text(
                             "🎸 Bass Boost (hloubky)",
-                            color = AppColors.TextPrimary,
+                            color = colors.textPrimary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold
                         )
                         Text(
                             "${(state.bassBoostStrength / 10)}%",
-                            color = if (state.enabled && state.bassBoostStrength > 0) AppColors.YouTubeMusicPink else AppColors.TextSecondary,
+                            color = if (state.enabled && state.bassBoostStrength > 0) colors.youTubeMusicPink else colors.textSecondary,
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -210,9 +218,9 @@ fun EqualizerDialog(
                         onValueChange = { onBassBoostChange(it.toInt()) },
                         valueRange = 0f..1000f,
                         colors = SliderDefaults.colors(
-                            thumbColor = AppColors.YouTubeMusicPink,
-                            activeTrackColor = AppColors.YouTubeMusicPink,
-                            inactiveTrackColor = AppColors.BgMain
+                            thumbColor = colors.youTubeMusicPink,
+                            activeTrackColor = colors.youTubeMusicPink,
+                            inactiveTrackColor = if (colors.isDark) colors.bgMain else colors.border
                         ),
                         modifier = Modifier.height(28.dp)
                     )
@@ -225,12 +233,17 @@ fun EqualizerDialog(
                 ) {
                     Checkbox(
                         checked = state.loudnessEnabled,
-                        onCheckedChange = onLoudnessToggle
+                        onCheckedChange = onLoudnessToggle,
+                        colors = CheckboxDefaults.colors(
+                            checkedColor = colors.primaryBlue,
+                            checkmarkColor = MaterialTheme.colorScheme.onPrimary,
+                            uncheckedColor = colors.textSecondary
+                        )
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
                         "🔊 Zesílení a normalizace hlasitosti",
-                        color = AppColors.TextPrimary,
+                        color = colors.textPrimary,
                         fontSize = 12.sp
                     )
                 }
@@ -238,15 +251,18 @@ fun EqualizerDialog(
         },
         dismissButton = {
             TextButton(onClick = onReset) {
-                Text("Reset", color = AppColors.TextSecondary)
+                Text("Reset", color = colors.textSecondary)
             }
         },
         confirmButton = {
             Button(
                 onClick = onDismiss,
-                colors = ButtonDefaults.buttonColors(containerColor = AppColors.PrimaryBlue)
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.primaryBlue,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
             ) {
-                Text("Hotovo", color = Color.White)
+                Text("Hotovo")
             }
         }
     )
@@ -254,6 +270,7 @@ fun EqualizerDialog(
 
 @Composable
 private fun EqualizerCurvePreview(state: EqualizerState) {
+    val colors = AppTheme.colors
     val minMb = state.minLevelMb.toFloat()
     val maxMb = state.maxLevelMb.coerceAtLeast(state.minLevelMb + 100).toFloat()
     val span = (maxMb - minMb).coerceAtLeast(1f)
@@ -263,8 +280,8 @@ private fun EqualizerCurvePreview(state: EqualizerState) {
             .fillMaxWidth()
             .height(74.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(AppColors.BgMain)
-            .border(1.dp, AppColors.Border, RoundedCornerShape(8.dp))
+            .background(colors.bgMain)
+            .border(1.dp, colors.border, RoundedCornerShape(8.dp))
             .padding(horizontal = 10.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.Bottom
@@ -272,10 +289,10 @@ private fun EqualizerCurvePreview(state: EqualizerState) {
         state.bands.forEach { band ->
             val norm = ((band.levelMb - minMb) / span).coerceIn(0.08f, 1f)
             val barColor = when {
-                !state.enabled -> AppColors.Border
-                band.levelMb > 0 -> AppColors.PrimaryBlue
-                band.levelMb < 0 -> AppColors.WarningAmber
-                else -> AppColors.TextSecondary.copy(alpha = 0.6f)
+                !state.enabled -> colors.border
+                band.levelMb > 0 -> colors.primaryBlue
+                band.levelMb < 0 -> colors.warningAmber
+                else -> colors.textSecondary.copy(alpha = 0.6f)
             }
             Column(
                 modifier = Modifier
@@ -301,7 +318,7 @@ private fun EqualizerCurvePreview(state: EqualizerState) {
                 Spacer(Modifier.height(4.dp))
                 Text(
                     band.label.replace(" Hz", "").replace(" kHz", "k"),
-                    color = AppColors.TextSecondary,
+                    color = colors.textSecondary,
                     fontSize = 9.sp,
                     textAlign = TextAlign.Center
                 )
